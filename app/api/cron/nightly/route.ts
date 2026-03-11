@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import {
   calcPhysiqueScore,
   calcStrengthScore,
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = createClient();
+  const supabase = createServiceClient();
 
   // Get all users
   const { data: usersRaw, error: usersError } = await supabase.from("users").select("*");

@@ -66,7 +66,7 @@ export async function GET() {
       .limit(1),
     supabase
       .from("exercises")
-      .select("*, sets:workout_sets(*)")
+      .select("*")
       .eq("user_id", user.id)
       .eq("active", true)
       .eq("is_primary", true)

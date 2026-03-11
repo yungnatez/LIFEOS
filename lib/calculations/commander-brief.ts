@@ -45,7 +45,7 @@ export function generateCommanderBrief(data: BriefInput): BriefOutput {
     : null;
 
   const milestone =
-    daysLeft !== null && daysLeft <= 30
+    daysLeft !== null && daysLeft > 0 && daysLeft <= 30
       ? `${daysLeft} days to ${nearest.title}.`
       : "Your trajectory is optimal.";
 

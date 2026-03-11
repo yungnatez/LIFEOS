@@ -35,6 +35,16 @@ function getPathY(xPct: number): number {
 export default function StrategyMap({ milestones }: StrategyMapProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
+  const sortedDates = [...milestones].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  const earliest = sortedDates[0];
+  const latest = sortedDates[sortedDates.length - 1];
+  const subtitle =
+    milestones.length > 0
+      ? `Timeline: ${earliest?.date ?? "—"} → ${latest?.date ?? "—"}`
+      : "No active goals";
+
   return (
     <div className="relative w-full">
       <div className="flex justify-between items-start mb-8">
@@ -42,9 +52,7 @@ export default function StrategyMap({ milestones }: StrategyMapProps) {
           <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#64748b]">
             Strategy Visualization Map
           </p>
-          <p className="text-xs text-[#64748b] mt-1">
-            Timeline projection for Q3 – Q4 2024
-          </p>
+          <p className="text-xs text-[#64748b] mt-1">{subtitle}</p>
         </div>
         <div className="flex gap-2">
           <button className="size-8 bg-[#1e293b] rounded flex items-center justify-center text-[#64748b] hover:text-white transition-colors">
@@ -219,12 +227,16 @@ export default function StrategyMap({ milestones }: StrategyMapProps) {
         })}
 
         {/* Footer labels */}
-        <div className="absolute bottom-0 left-0">
-          <p className="text-[8px] text-[#64748b]">AUG 01 / Project Start</p>
-        </div>
-        <div className="absolute bottom-0 right-0 text-right">
-          <p className="text-[8px] text-[#64748b]">DEC 2024 / Final Target</p>
-        </div>
+        {earliest && (
+          <div className="absolute bottom-0 left-0">
+            <p className="text-[8px] text-[#64748b]">{earliest.date} / First Target</p>
+          </div>
+        )}
+        {latest && latest.id !== earliest?.id && (
+          <div className="absolute bottom-0 right-0 text-right">
+            <p className="text-[8px] text-[#64748b]">{latest.date} / Final Target</p>
+          </div>
+        )}
       </div>
     </div>
   );

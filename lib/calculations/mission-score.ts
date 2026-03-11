@@ -57,8 +57,27 @@ export function calcStrengthScore(
   if (workouts.length === 0) return 50;
   const recent4wk = totalVolumeLastNDays(workouts, 28);
   const baseline = totalVolumeDaysNtoM(workouts, 28, 56);
-  if (baseline === 0) return 50;
-  return Math.min(100, Math.max(0, (recent4wk / baseline) * 100));
+  if (baseline > 0) {
+    return Math.min(100, Math.max(0, (recent4wk / baseline) * 100));
+  }
+  // No baseline in the standard 28–56 day window (e.g. all data was imported
+  // historically). Use the oldest 4 weeks of available data as the baseline so
+  // we get a meaningful score rather than a flat 50.
+  const sorted = [...workouts].sort(
+    (a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime()
+  );
+  const oldestDate = new Date(sorted[0].logged_at);
+  const baselineCutoff = new Date(oldestDate);
+  baselineCutoff.setDate(baselineCutoff.getDate() + 28);
+  const baselineVol = sorted
+    .filter((w) => new Date(w.logged_at) < baselineCutoff)
+    .reduce(
+      (sum, w) =>
+        sum + w.sets.reduce((s, set) => s + set.weight_kg * set.reps, 0),
+      0
+    );
+  if (baselineVol === 0) return 50;
+  return Math.min(100, Math.max(0, (recent4wk / baselineVol) * 100));
 }
 
 export function calcFinanceScore(goals: Goal[]): number {
