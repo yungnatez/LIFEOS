@@ -34,6 +34,7 @@ export async function GET() {
     { key: "meditation", label: "Meditation (20m)" },
     { key: "deep_work_hours", label: "Deep Work (4h)", threshold: 4 },
     { key: "vitamin_intake", label: "Vitamin Intake" },
+    { key: "steps", label: "Steps ≥ 8k", threshold: 8000 },
   ];
 
   const matrix: Record<string, HabitStatus[]> = {};

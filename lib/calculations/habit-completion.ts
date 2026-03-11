@@ -6,7 +6,8 @@ export function calcCompletionStatus(
   sleepHours: number | null,
   meditation: boolean,
   deepWorkHours: number | null,
-  vitaminIntake: boolean
+  vitaminIntake: boolean,
+  steps?: number | null
 ): "full" | "partial" | "missed" {
   const tracked = [
     gym,
@@ -15,9 +16,10 @@ export function calcCompletionStatus(
     meditation,
     (deepWorkHours ?? 0) >= 4,
     vitaminIntake,
+    (steps ?? 0) >= 8000,
   ];
   const completed = tracked.filter(Boolean).length;
-  if (completed === 6) return "full";
+  if (completed === 7) return "full";
   if (completed > 0) return "partial";
   return "missed";
 }

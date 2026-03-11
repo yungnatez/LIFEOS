@@ -201,6 +201,7 @@ export type Database = {
           meditation: boolean;
           deep_work_hours: number | null;
           vitamin_intake: boolean;
+          steps: number;
           completion_status: "full" | "partial" | "missed";
         };
         Insert: {
@@ -213,6 +214,7 @@ export type Database = {
           meditation?: boolean;
           deep_work_hours?: number | null;
           vitamin_intake?: boolean;
+          steps?: number;
           completion_status?: "full" | "partial" | "missed";
         };
         Update: {
@@ -225,6 +227,7 @@ export type Database = {
           meditation?: boolean;
           deep_work_hours?: number | null;
           vitamin_intake?: boolean;
+          steps?: number;
           completion_status?: "full" | "partial" | "missed";
         };
 

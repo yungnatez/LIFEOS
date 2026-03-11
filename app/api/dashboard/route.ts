@@ -178,6 +178,8 @@ export async function GET() {
     0
   );
 
+  const todaySteps = habits[0]?.steps ?? 0;
+
   return Response.json({
     systemState: systemStateRes.data as SystemState | null,
     priorityGoal: priorityGoalWithMeta,
@@ -189,6 +191,7 @@ export async function GET() {
     latestNutrition: (nutritionRes.data?.[0] ?? null) as NutritionLog | null,
     habitHeatmap,
     streaks,
+    todaySteps,
     finances,
     financialGoals: goals.filter((g) => g.category === "finance"),
     allGoals: goals,

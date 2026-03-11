@@ -8,6 +8,7 @@ interface HabitDay {
 interface ConsistencyTrackerProps {
   habitDays: HabitDay[];
   streaks: { gym: number; sleep: string; meditation: number };
+  todaySteps?: number;
   onLogHabits?: () => void;
 }
 
@@ -23,11 +24,15 @@ const statusGlow: Record<string, string | undefined> = {
   missed: undefined,
 };
 
+const STEPS_GOAL = 8000;
+
 export default function ConsistencyTracker({
   habitDays,
   streaks,
+  todaySteps = 0,
   onLogHabits,
 }: ConsistencyTrackerProps) {
+  const stepsPct = Math.min(100, Math.round((todaySteps / STEPS_GOAL) * 100));
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center">
@@ -108,6 +113,33 @@ export default function ConsistencyTracker({
           <span className="text-xs font-black text-[#8b5cf6]">
             {streaks.meditation} DAYS
           </span>
+        </div>
+      </div>
+
+      {/* Today's steps */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-extrabold uppercase text-[#64748b]">Today&apos;s Steps</span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-black text-white">
+              {todaySteps.toLocaleString()}
+            </span>
+            <span className="text-[10px] text-[#64748b]">/ 8,000</span>
+            {todaySteps >= STEPS_GOAL && (
+              <span className="text-[9px] font-extrabold text-[#10b981] ml-1">GOAL</span>
+            )}
+          </div>
+        </div>
+        <div className="h-1.5 rounded-full bg-[#1e293b] overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${stepsPct}%`,
+              background: todaySteps >= STEPS_GOAL
+                ? "#10b981"
+                : "linear-gradient(90deg, #8b5cf6, #3b86f7)",
+            }}
+          />
         </div>
       </div>
 

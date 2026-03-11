@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
     meditation?: boolean;
     deep_work_hours?: number;
     vitamin_intake?: boolean;
+    steps?: number;
   };
   try {
     body = await req.json();
@@ -31,7 +32,8 @@ export async function POST(req: NextRequest) {
     body.sleep_hours ?? null,
     body.meditation ?? false,
     body.deep_work_hours ?? null,
-    body.vitamin_intake ?? false
+    body.vitamin_intake ?? false,
+    body.steps ?? null
   );
 
   const today = new Date().toISOString().slice(0, 10);
@@ -48,6 +50,7 @@ export async function POST(req: NextRequest) {
         meditation: body.meditation ?? false,
         deep_work_hours: body.deep_work_hours ?? null,
         vitamin_intake: body.vitamin_intake ?? false,
+        steps: body.steps ?? 0,
         completion_status,
       } as never,
       { onConflict: "user_id,habit_date" }

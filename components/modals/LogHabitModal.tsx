@@ -16,6 +16,7 @@ export default function LogHabitModal({ open, onClose, onSuccess }: LogHabitModa
     meditation: false,
     deep_work_hours: "4.0",
     vitamin_intake: false,
+    steps: "0",
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,10 +44,11 @@ export default function LogHabitModal({ open, onClose, onSuccess }: LogHabitModa
     form.meditation,
     parseFloat(form.deep_work_hours) >= 4,
     form.vitamin_intake,
+    parseInt(form.steps, 10) >= 8000,
   ];
   const completed = tracked.filter(Boolean).length;
   const status: "full" | "partial" | "missed" =
-    completed === 6 ? "full" : completed > 0 ? "partial" : "missed";
+    completed === 7 ? "full" : completed > 0 ? "partial" : "missed";
 
   const statusColors = { full: "#10b981", partial: "#f59e0b", missed: "#ef4444" };
   const statusLabels = { full: "FULL", partial: "PARTIAL", missed: "MISSED" };
@@ -66,6 +68,7 @@ export default function LogHabitModal({ open, onClose, onSuccess }: LogHabitModa
           meditation: form.meditation,
           deep_work_hours: parseFloat(form.deep_work_hours),
           vitamin_intake: form.vitamin_intake,
+          steps: parseInt(form.steps, 10) || 0,
         }),
       });
       if (!res.ok) {
@@ -145,6 +148,26 @@ export default function LogHabitModal({ open, onClose, onSuccess }: LogHabitModa
               onChange={(e) => setForm((prev) => ({ ...prev, deep_work_hours: e.target.value }))}
               className="w-20 bg-[#1e293b] border border-[#1E2D45] rounded px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-[#8b5cf6]"
             />
+          </div>
+
+          <div className="flex items-center justify-between py-1">
+            <div>
+              <span className="text-sm font-medium text-[#f1f5f9]">Steps</span>
+              <span className="ml-2 text-[10px] text-[#64748b]">goal: 8,000</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                step="100"
+                min="0"
+                value={form.steps}
+                onChange={(e) => setForm((prev) => ({ ...prev, steps: e.target.value }))}
+                className="w-24 bg-[#1e293b] border border-[#1E2D45] rounded px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-[#8b5cf6]"
+              />
+              {parseInt(form.steps, 10) >= 8000 && (
+                <span className="text-[10px] font-extrabold text-[#10b981]">✓</span>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center justify-between py-3 mt-2 border-t border-[#1E2D45]">

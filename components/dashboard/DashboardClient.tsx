@@ -38,6 +38,7 @@ interface DashboardData {
   latestNutrition: NutritionLog | null;
   habitHeatmap: HabitDay[];
   streaks: { gym: number; sleep: string; meditation: number };
+  todaySteps: number;
   finances: FinanceSummary | null;
   financialGoals: Goal[];
   allGoals: Goal[];
@@ -303,6 +304,7 @@ export default function DashboardClient() {
             <ConsistencyTracker
               habitDays={habitDays}
               streaks={data?.streaks ?? { gym: 0, sleep: "0h 00m", meditation: 0 }}
+              todaySteps={data?.todaySteps ?? 0}
               onLogHabits={() => setModal("habit")}
             />
           </Card>
