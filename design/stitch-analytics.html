@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LIFEOS | Deep Analytics Mission Control</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b86f7",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101722",
+                        "surface": "#1a2533",
+                        "accent-green": "#10b981",
+                        "accent-purple": "#8b5cf6",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(26, 37, 51, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(59, 134, 247, 0.1);
+        }
+        .glow-primary {
+            box-shadow: 0 0 15px rgba(59, 134, 247, 0.3);
+        }
+        .grid-bg {
+            background-size: 40px 40px;
+            background-image: radial-gradient(circle, rgba(59, 134, 247, 0.05) 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen grid-bg">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-primary/20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-[1440px] mx-auto flex items-center justify-between px-6 py-3">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<div class="size-8 bg-primary/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">analytics</span>
+</div>
+<h2 class="text-xl font-black leading-tight tracking-tight dark:text-white">LIFEOS <span class="text-primary/70 font-light">ANALYTICS</span></h2>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="#">Health</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="#">Finance</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="#">Habits</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="#">Strategy</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="bg-slate-100 dark:bg-surface border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary w-64" placeholder="Search data points..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full border-2 border-primary/30 p-0.5">
+<img class="rounded-full w-full h-full object-cover" data-alt="User profile avatar showing a modern professional" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABn7EPZnlky_buNsDnS3D8rQC97Vsmo5jTc7MlawZZMM9M1hSxCZf4vuEcKdwpHj5G72FVZ53sSx2uRBARiArn_WdgGZa8hdY8w5QM-uhf71ugA76IECtOrWWfoy4lmaouuL-Ocp6EHBVIuvYiBpJApHKpAxihNgaUW6AFV1bY_WCMYJBxKUwfa2IYWqnKrBTHBNvrKan5pAj2pswfSWj1Ke3ETg5ei7y1xk2XSl7kQZB-uV54ZpCtw5XURi1Fix87eD3zFNZXHCE0"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-[1440px] mx-auto p-6 space-y-8">
+<!-- Dashboard Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-primary/10">
+<div>
+<div class="flex items-center gap-2 text-primary mb-2">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span class="text-xs font-mono tracking-widest uppercase">System Status: Optimal</span>
+</div>
+<h1 class="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">Mission Control: Deep Analytics</h1>
+<p class="text-slate-500 dark:text-slate-400 mt-1">Real-time predictive modeling and cross-domain correlation engine</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all glow-primary">
+<span class="material-symbols-outlined text-lg">download</span>
+                    Export Intelligence Report
+                </button>
+<button class="flex items-center gap-2 px-5 py-2.5 bg-surface text-slate-300 font-bold rounded-lg hover:bg-surface/80 border border-primary/20 transition-all">
+<span class="material-symbols-outlined text-lg">refresh</span>
+                    Re-Sync
+                </button>
+</div>
+</div>
+<!-- Metric Tabs -->
+<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+<button class="px-6 py-3 border-b-2 border-primary text-primary font-bold whitespace-nowrap">Weight Model</button>
+<button class="px-6 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-300 font-bold whitespace-nowrap">Savings Forecast</button>
+<button class="px-6 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-300 font-bold whitespace-nowrap">Performance Correlation</button>
+<button class="px-6 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-300 font-bold whitespace-nowrap">Habit Matrix</button>
+</div>
+<!-- Section 1: Weight Prediction Model -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 glass-panel rounded-xl p-6 relative overflow-hidden group">
+<div class="flex justify-between items-start mb-8">
+<div>
+<h3 class="text-lg font-bold text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">monitoring</span>
+                            Weight Prediction Model
+                        </h3>
+<p class="text-sm text-slate-400">Projected trend based on current 2,400 kcal/day avg</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-accent-green/10 text-accent-green text-xs font-bold rounded-full border border-accent-green/20">On Track</span>
+</div>
+</div>
+<!-- Chart Placeholder -->
+<div class="h-64 w-full relative">
+<div class="absolute inset-0 flex items-end justify-between px-2">
+<!-- Simulated Line Chart with SVG -->
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 200">
+<defs>
+<lineargradient id="lineGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#3b86f7" stop-opacity="0.5"></stop>
+<stop offset="100%" stop-color="#3b86f7" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,50 Q100,60 200,80 T400,100 T600,130 T800,150 T1000,170" fill="none" stroke="#3b86f7" stroke-width="3"></path>
+<path d="M0,50 Q100,60 200,80 T400,100 T600,130 T800,150 T1000,170 L1000,200 L0,200 Z" fill="url(#lineGradient)"></path>
+<!-- Prediction Point -->
+<circle class="animate-pulse" cx="1000" cy="170" fill="#3b86f7" r="6"></circle>
+</svg>
+<!-- Tooltip Overlay -->
+<div class="absolute left-[70%] top-[40%] bg-surface/90 border border-primary/30 p-3 rounded-lg shadow-2xl z-10">
+<p class="text-[10px] text-primary font-bold uppercase tracking-wider mb-1">Forecast: Oct 2024</p>
+<p class="text-xl font-black text-white">78.4 kg</p>
+<p class="text-[10px] text-accent-green leading-tight mt-1">Increasing protein by 10% projected to speed up lean mass gain by 0.5kg/month</p>
+</div>
+</div>
+</div>
+<div class="flex justify-between mt-4 text-[10px] font-mono text-slate-500 uppercase tracking-widest">
+<span>JAN</span><span>MAR</span><span>MAY</span><span>JUL</span><span>SEP</span><span>NOV</span>
+</div>
+</div>
+<div class="glass-panel rounded-xl p-6 flex flex-col justify-between">
+<div>
+<h4 class="text-xs font-black text-primary uppercase tracking-[0.2em] mb-4">Core Model Variables</h4>
+<div class="space-y-4">
+<div class="p-4 rounded-lg bg-primary/5 border border-primary/10">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs text-slate-400">Daily Caloric Deficit</span>
+<span class="text-xs font-bold text-white">-350 kcal</span>
+</div>
+<div class="w-full bg-slate-700 h-1.5 rounded-full">
+<div class="bg-primary h-1.5 rounded-full w-[65%]"></div>
+</div>
+</div>
+<div class="p-4 rounded-lg bg-accent-purple/5 border border-accent-purple/10">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs text-slate-400">Activity Multiplier</span>
+<span class="text-xs font-bold text-white">1.45x</span>
+</div>
+<div class="w-full bg-slate-700 h-1.5 rounded-full">
+<div class="bg-accent-purple h-1.5 rounded-full w-[45%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-primary/10">
+<p class="text-xs text-slate-400 leading-relaxed italic">
+                        "Your metabolic rate has adjusted +2% over the last 30 days due to increased resistance training frequency."
+                    </p>
+</div>
+</div>
+</section>
+<!-- Section 2: Savings Forecast & Correlation -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Savings Forecast Stacked Area -->
+<div class="glass-panel rounded-xl p-6">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-lg font-bold text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+                            Portfolio Savings Forecast
+                        </h3>
+<p class="text-sm text-slate-400">10-year growth projections at 7% APY</p>
+</div>
+</div>
+<div class="h-56 w-full flex items-end gap-1">
+<!-- Stacked Area Visualization -->
+<div class="flex-1 bg-primary/20 h-[30%] rounded-t-sm relative group">
+<div class="absolute inset-x-0 bottom-full bg-accent-purple/30 h-[10%] mb-px"></div>
+<div class="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 text-[10px] text-white font-bold">$12k</div>
+</div>
+<div class="flex-1 bg-primary/25 h-[35%] rounded-t-sm relative group">
+<div class="absolute inset-x-0 bottom-full bg-accent-purple/35 h-[12%] mb-px"></div>
+</div>
+<div class="flex-1 bg-primary/30 h-[42%] rounded-t-sm relative group">
+<div class="absolute inset-x-0 bottom-full bg-accent-purple/40 h-[15%] mb-px"></div>
+</div>
+<div class="flex-1 bg-primary/35 h-[50%] rounded-t-sm relative group">
+<div class="absolute inset-x-0 bottom-full bg-accent-purple/45 h-[18%] mb-px"></div>
+</div>
+<div class="flex-1 bg-primary/40 h-[60%] rounded-t-sm relative group">
+<div class="absolute inset-x-0 bottom-full bg-accent-purple/50 h-[22%] mb-px"></div>
+</div>
+<div class="flex-1 bg-primary/50 h-[75%] rounded-t-sm relative group">
+<div class="absolute inset-x-0 bottom-full bg-accent-purple/60 h-[30%] mb-px"></div>
+</div>
+<div class="flex-1 bg-primary/60 h-[95%] rounded-t-sm relative group border-r border-primary">
+<div class="absolute inset-x-0 bottom-full bg-accent-purple/70 h-[40%] mb-px"></div>
+<div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-surface p-2 rounded border border-primary text-[10px] text-white w-24">
+<span class="block font-black text-primary">2034 Target</span>
+                            $1.2M Total
+                        </div>
+</div>
+</div>
+<div class="flex justify-between mt-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<div class="size-2 rounded-full bg-primary"></div>
+<span class="text-[10px] text-slate-400">Principal</span>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="size-2 rounded-full bg-accent-purple"></div>
+<span class="text-[10px] text-slate-400">Compounding</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Correlation Matrix / Heat Map -->
+<div class="glass-panel rounded-xl p-6">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-lg font-bold text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">scatter_plot</span>
+                            Cross-Domain Correlation
+                        </h3>
+<p class="text-sm text-slate-400">Training Volume vs Strength Gains Analysis</p>
+</div>
+</div>
+<div class="grid grid-cols-6 grid-rows-6 gap-1 h-56">
+<!-- Fake Scatter Plot / Heatmap Grid -->
+<div class="bg-primary/5 rounded"></div><div class="bg-primary/5 rounded"></div><div class="bg-primary/5 rounded"></div><div class="bg-primary/5 rounded"></div><div class="bg-primary/20 rounded"></div><div class="bg-primary/40 rounded flex items-center justify-center"><div class="size-2 rounded-full bg-white animate-ping"></div></div>
+<div class="bg-primary/5 rounded"></div><div class="bg-primary/5 rounded"></div><div class="bg-primary/5 rounded"></div><div class="bg-primary/30 rounded"></div><div class="bg-primary/60 rounded"></div><div class="bg-primary/20 rounded"></div>
+<div class="bg-primary/5 rounded"></div><div class="bg-primary/10 rounded"></div><div class="bg-primary/40 rounded"></div><div class="bg-primary/80 rounded"></div><div class="bg-primary/30 rounded"></div><div class="bg-primary/5 rounded"></div>
+<div class="bg-primary/5 rounded"></div><div class="bg-primary/20 rounded"></div><div class="bg-primary/70 rounded"></div><div class="bg-primary/40 rounded"></div><div class="bg-primary/10 rounded"></div><div class="bg-primary/5 rounded"></div>
+<div class="bg-primary/10 rounded"></div><div class="bg-primary/50 rounded"></div><div class="bg-primary/30 rounded"></div><div class="bg-primary/10 rounded"></div><div class="bg-primary/5 rounded"></div><div class="bg-primary/5 rounded"></div>
+<div class="bg-primary/30 rounded"></div><div class="bg-primary/15 rounded"></div><div class="bg-primary/5 rounded"></div><div class="bg-primary/5 rounded"></div><div class="bg-primary/5 rounded"></div><div class="bg-primary/5 rounded"></div>
+</div>
+<div class="flex justify-between mt-4 text-[10px] font-mono text-slate-500">
+<span>LOW VOLUME</span>
+<span>CORRELATION: R=0.82</span>
+<span>HIGH VOLUME</span>
+</div>
+</div>
+</section>
+<!-- Section 3: Habit Consistency Matrix -->
+<section class="glass-panel rounded-xl p-6">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+<div>
+<h3 class="text-lg font-bold text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">calendar_view_month</span>
+                        Habit Consistency Matrix
+                    </h3>
+<p class="text-sm text-slate-400">12-month cross-habit performance density</p>
+</div>
+<div class="flex items-center gap-4 bg-background-dark/50 p-2 rounded-lg border border-primary/10">
+<div class="flex items-center gap-2">
+<div class="size-3 rounded-sm bg-slate-800"></div>
+<span class="text-[10px] text-slate-500 uppercase font-bold">Missed</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-3 rounded-sm bg-primary/40"></div>
+<span class="text-[10px] text-slate-500 uppercase font-bold">Partial</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-3 rounded-sm bg-primary"></div>
+<span class="text-[10px] text-slate-500 uppercase font-bold">Full</span>
+</div>
+</div>
+</div>
+<div class="overflow-x-auto">
+<div class="min-w-[800px] space-y-4">
+<!-- Habit Row 1 -->
+<div class="flex items-center gap-4">
+<div class="w-32 text-xs font-bold text-slate-300">Deep Work (4h)</div>
+<div class="flex-1 grid grid-cols-52 gap-1 h-4">
+<!-- Simulating 52 weeks -->
+<div class="flex gap-1">
+<script>
+                                    for(let i=0; i<52; i++) {
+                                        const opacity = Math.random() > 0.3 ? (Math.random() > 0.5 ? 'bg-primary' : 'bg-primary/40') : 'bg-slate-800';
+                                        document.write(`<div class="w-2 h-4 rounded-sm ${opacity}"></div>`);
+                                    }
+                                </script>
+</div>
+</div>
+<div class="w-12 text-[10px] font-mono text-primary font-bold">82%</div>
+</div>
+<!-- Habit Row 2 -->
+<div class="flex items-center gap-4">
+<div class="w-32 text-xs font-bold text-slate-300">Resistance Train</div>
+<div class="flex-1 grid grid-cols-52 gap-1 h-4">
+<div class="flex gap-1">
+<script>
+                                    for(let i=0; i<52; i++) {
+                                        const opacity = Math.random() > 0.1 ? (Math.random() > 0.2 ? 'bg-primary' : 'bg-primary/40') : 'bg-slate-800';
+                                        document.write(`<div class="w-2 h-4 rounded-sm ${opacity}"></div>`);
+                                    }
+                                </script>
+</div>
+</div>
+<div class="w-12 text-[10px] font-mono text-primary font-bold">94%</div>
+</div>
+<!-- Habit Row 3 -->
+<div class="flex items-center gap-4">
+<div class="w-32 text-xs font-bold text-slate-300">Meditation (20m)</div>
+<div class="flex-1 grid grid-cols-52 gap-1 h-4">
+<div class="flex gap-1">
+<script>
+                                    for(let i=0; i<52; i++) {
+                                        const opacity = Math.random() > 0.6 ? (Math.random() > 0.5 ? 'bg-primary' : 'bg-primary/40') : 'bg-slate-800';
+                                        document.write(`<div class="w-2 h-4 rounded-sm ${opacity}"></div>`);
+                                    }
+                                </script>
+</div>
+</div>
+<div class="w-12 text-[10px] font-mono text-primary font-bold">41%</div>
+</div>
+<!-- Habit Row 4 -->
+<div class="flex items-center gap-4">
+<div class="w-32 text-xs font-bold text-slate-300">Vitamin Intake</div>
+<div class="flex-1 grid grid-cols-52 gap-1 h-4">
+<div class="flex gap-1">
+<script>
+                                    for(let i=0; i<52; i++) {
+                                        const opacity = Math.random() > 0.05 ? 'bg-primary' : 'bg-slate-800';
+                                        document.write(`<div class="w-2 h-4 rounded-sm ${opacity}"></div>`);
+                                    }
+                                </script>
+</div>
+</div>
+<div class="w-12 text-[10px] font-mono text-primary font-bold">98%</div>
+</div>
+</div>
+</div>
+<div class="mt-6 p-4 rounded-lg bg-primary/5 border-l-4 border-primary">
+<h4 class="text-xs font-black text-white uppercase tracking-wider mb-1">Strategic Insight</h4>
+<p class="text-sm text-slate-400">
+                    "Correlation detected: Your <strong>Deep Work</strong> consistency drops by 25% on days following a missed <strong>Meditation</strong> session. Recommend automating morning meditation cues."
+                </p>
+</div>
+</section>
+<!-- Footer / System Meta -->
+<footer class="flex flex-col md:flex-row justify-between items-center gap-4 py-8 text-slate-600 dark:text-slate-500 text-xs border-t border-primary/10">
+<div class="flex items-center gap-6">
+<span>LIFEOS v2.4.0-Stable</span>
+<span class="flex items-center gap-1"><span class="size-1.5 rounded-full bg-accent-green"></span> Engine Online</span>
+<span>Last Sync: 2m ago</span>
+</div>
+<div class="flex gap-6">
+<a class="hover:text-primary transition-colors" href="#">Privacy Protocol</a>
+<a class="hover:text-primary transition-colors" href="#">API Access</a>
+<a class="hover:text-primary transition-colors" href="#">Neural Mesh Status</a>
+</div>
+</footer>
+</main>
+</body></html>

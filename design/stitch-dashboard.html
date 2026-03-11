@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LIFEOS | Mission Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b86f7",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#060B17",
+                        "physique": "#14b8a6",
+                        "strength": "#3b82f6",
+                        "finance": "#f59e0b",
+                        "habits": "#8b5cf6",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="border-b border-slate-800 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50 px-6 py-3">
+<div class="max-w-[1440px] mx-auto flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl font-bold">rocket_launch</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-xl font-black tracking-tighter text-white">LIFEOS <span class="text-xs font-medium text-primary/80 ml-1">v2.4</span></h1>
+<div class="flex items-center gap-2">
+<span class="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">System Active</p>
+</div>
+</div>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="flex items-center gap-2 text-primary font-bold text-sm bg-primary/10 px-4 py-2 rounded-lg border border-primary/20" href="#">
+<span class="material-symbols-outlined text-sm">grid_view</span> Dashboard
+                </a>
+<a class="flex items-center gap-2 text-slate-400 hover:text-white font-medium text-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">monitoring</span> Analytics
+                </a>
+<a class="flex items-center gap-2 text-slate-400 hover:text-white font-medium text-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">account_balance_wallet</span> Capital
+                </a>
+<a class="flex items-center gap-2 text-slate-400 hover:text-white font-medium text-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">settings</span> Config
+                </a>
+</nav>
+<div class="flex items-center gap-3">
+<button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-background-dark"></span>
+</button>
+<div class="h-8 w-[1px] bg-slate-800 mx-2"></div>
+<div class="flex items-center gap-3 bg-slate-800/50 p-1.5 pr-4 rounded-full border border-slate-700">
+<div class="size-8 rounded-full bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-xs font-bold border border-white/10" data-alt="User avatar placeholder with abstract gradient">C</div>
+<span class="text-xs font-bold text-slate-200">COMMANDER</span>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-[1440px] mx-auto p-6 space-y-6">
+<!-- Top Row: Mission Briefing -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Mission Score Ring -->
+<div class="lg:col-span-3 bg-slate-900/40 border border-slate-800 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<h3 class="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Mission Score</h3>
+<div class="relative size-40">
+<!-- Segmented Rings Simulation -->
+<svg class="size-full -rotate-90 transform" viewbox="0 0 100 100">
+<circle class="text-slate-800" cx="50" cy="50" fill="transparent" r="45" stroke="currentColor" stroke-width="8"></circle>
+<!-- Physique Ring -->
+<circle class="text-physique" cx="50" cy="50" fill="transparent" r="45" stroke="currentColor" stroke-dasharray="283" stroke-dashoffset="70" stroke-linecap="round" stroke-width="8"></circle>
+<!-- Strength Ring -->
+<circle class="text-strength" cx="50" cy="50" fill="transparent" r="35" stroke="currentColor" stroke-dasharray="220" stroke-dashoffset="40" stroke-linecap="round" stroke-width="8"></circle>
+<!-- Finance Ring -->
+<circle class="text-finance" cx="50" cy="50" fill="transparent" r="25" stroke="currentColor" stroke-dasharray="157" stroke-dashoffset="30" stroke-linecap="round" stroke-width="8"></circle>
+<!-- Habits Ring -->
+<circle class="text-habits" cx="50" cy="50" fill="transparent" r="15" stroke="currentColor" stroke-dasharray="94" stroke-dashoffset="10" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-4xl font-black text-white">88</span>
+<span class="text-[10px] font-bold text-emerald-400 leading-none mt-1">+4% ▲</span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-2 mt-6 w-full">
+<div class="size-2 rounded-full bg-physique mx-auto" title="Physique"></div>
+<div class="size-2 rounded-full bg-strength mx-auto" title="Strength"></div>
+<div class="size-2 rounded-full bg-finance mx-auto" title="Finance"></div>
+<div class="size-2 rounded-full bg-habits mx-auto" title="Habits"></div>
+</div>
+</div>
+<!-- Commander Brief -->
+<div class="lg:col-span-6 bg-slate-900/40 border border-slate-800 rounded-xl p-6 relative flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">terminal</span>
+<h3 class="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Commander Brief</h3>
+</div>
+<p class="text-xl font-medium text-slate-200 leading-relaxed italic">
+                        "Body mass trending downward. Strength volume up <span class="text-strength font-bold">7%</span>. Savings rate ahead of schedule. Your trajectory is optimal."
+                    </p>
+</div>
+<div class="mt-4 pt-4 border-t border-slate-800/50 flex items-center justify-between">
+<div class="flex gap-4">
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold">Status</span>
+<span class="text-sm font-bold text-emerald-400">NOMINAL</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold">Efficiency</span>
+<span class="text-sm font-bold text-white">94.2%</span>
+</div>
+</div>
+<button class="text-xs font-bold text-primary hover:underline uppercase tracking-widest">Full Intel Report →</button>
+</div>
+</div>
+<!-- Next Milestone -->
+<div class="lg:col-span-3 bg-primary/10 border border-primary/20 rounded-xl p-6 flex flex-col justify-between">
+<div>
+<h3 class="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-4">Priority Objective</h3>
+<p class="text-lg font-bold text-white mb-2">Reach 90kg Bodyweight</p>
+<div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-2">
+<div class="bg-primary h-full w-[82%] rounded-full shadow-[0_0_8px_rgba(59,134,247,0.5)]"></div>
+</div>
+<div class="flex justify-between items-center text-[10px] font-bold text-slate-400">
+<span>84.5kg CURRENT</span>
+<span>90kg TARGET</span>
+</div>
+</div>
+<div class="bg-slate-900/50 rounded-lg p-3 mt-4 flex items-center gap-3">
+<div class="size-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">timer</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white">19 Days Remaining</span>
+<span class="text-[10px] text-slate-500 italic">Projected: On track</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Middle Section: 3D Life Progress Map -->
+<div class="bg-slate-900/40 border border-slate-800 rounded-xl p-8 relative overflow-hidden h-[400px]">
+<div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 2px 2px, #3b86f7 1px, transparent 0); background-size: 40px 40px;"></div>
+<div class="relative z-10 flex flex-col h-full">
+<div class="flex justify-between items-start mb-12">
+<div>
+<h3 class="text-sm font-bold text-white uppercase tracking-[0.2em]">Strategy Visualization Map</h3>
+<p class="text-xs text-slate-500 mt-1">Timeline projection for Q3 - Q4 2024</p>
+</div>
+<div class="flex gap-2">
+<button class="size-8 bg-slate-800 rounded flex items-center justify-center text-slate-400 hover:text-white"><span class="material-symbols-outlined text-sm">zoom_in</span></button>
+<button class="size-8 bg-slate-800 rounded flex items-center justify-center text-slate-400 hover:text-white"><span class="material-symbols-outlined text-sm">layers</span></button>
+</div>
+</div>
+<!-- SVG Roadmap -->
+<div class="flex-1 relative">
+<svg class="w-full h-full" preserveaspectratio="none">
+<path d="M 0 150 Q 200 100 400 180 T 800 120 T 1200 200" fill="none" opacity="0.4" stroke="#3b86f7" stroke-dasharray="8 4" stroke-width="2"></path>
+<path class="drop-shadow-[0_0_5px_#3b86f7]" d="M 0 150 Q 200 100 400 180" fill="none" stroke="#3b86f7" stroke-width="4"></path>
+</svg>
+<!-- Milestone Nodes -->
+<div class="absolute left-0 top-[150px] -translate-x-1/2 -translate-y-1/2 group">
+<div class="size-4 bg-primary rounded-full border-4 border-background-dark shadow-[0_0_10px_#3b86f7]"></div>
+<div class="absolute top-6 left-0 whitespace-nowrap">
+<p class="text-[10px] font-bold text-slate-400">AUG 01</p>
+<p class="text-xs font-bold text-white">Project Start</p>
+</div>
+</div>
+<div class="absolute left-[33%] top-[155px] -translate-x-1/2 -translate-y-1/2 group">
+<div class="size-6 bg-physique rounded-full border-4 border-background-dark shadow-[0_0_15px_#14b8a6]"></div>
+<div class="absolute -top-16 left-1/2 -translate-x-1/2 bg-slate-800/90 border border-physique/30 p-2 rounded-lg text-center backdrop-blur w-32 scale-90 group-hover:scale-100 transition-transform">
+<p class="text-[10px] font-bold text-physique">80% COMPLETE</p>
+<p class="text-xs font-bold text-white">Reach 80kg</p>
+<p class="text-[9px] text-slate-400 mt-1">Sept 12, 2024</p>
+</div>
+</div>
+<div class="absolute left-[66%] top-[140px] -translate-x-1/2 -translate-y-1/2 group">
+<div class="size-6 bg-finance rounded-full border-4 border-background-dark shadow-[0_0_15px_#f59e0b]"></div>
+<div class="absolute -top-16 left-1/2 -translate-x-1/2 bg-slate-800/90 border border-finance/30 p-2 rounded-lg text-center backdrop-blur w-32 scale-90 group-hover:scale-100 transition-transform">
+<p class="text-[10px] font-bold text-finance">UPCOMING</p>
+<p class="text-xs font-bold text-white">Turbo fund £3.5k</p>
+<p class="text-[9px] text-slate-400 mt-1">Oct 30, 2024</p>
+</div>
+</div>
+<div class="absolute left-[95%] top-[180px] -translate-x-1/2 -translate-y-1/2 opacity-50">
+<div class="size-4 bg-slate-700 rounded-full border-4 border-background-dark"></div>
+<div class="absolute top-6 right-0 whitespace-nowrap text-right">
+<p class="text-[10px] font-bold text-slate-500 italic">DEC 2024</p>
+<p class="text-xs font-bold text-slate-400">Final Target</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Modules Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Physique Analytics -->
+<div class="bg-slate-900/40 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-physique">fitness_center</span>
+<h3 class="text-xs font-bold text-white uppercase tracking-wider">Physique Analytics</h3>
+</div>
+<span class="text-[10px] font-bold bg-physique/10 text-physique px-2 py-0.5 rounded">WEEKLY TREND</span>
+</div>
+<div class="h-32 w-full flex items-end gap-1 px-2">
+<!-- Simple bar chart mockup -->
+<div class="flex-1 bg-physique/20 rounded-t-sm h-[60%] hover:bg-physique/40 transition-colors"></div>
+<div class="flex-1 bg-physique/20 rounded-t-sm h-[65%] hover:bg-physique/40 transition-colors"></div>
+<div class="flex-1 bg-physique/20 rounded-t-sm h-[62%] hover:bg-physique/40 transition-colors"></div>
+<div class="flex-1 bg-physique/20 rounded-t-sm h-[58%] hover:bg-physique/40 transition-colors"></div>
+<div class="flex-1 bg-physique/30 rounded-t-sm h-[55%] hover:bg-physique/40 transition-colors"></div>
+<div class="flex-1 bg-physique/50 rounded-t-sm h-[50%] hover:bg-physique/40 transition-colors"></div>
+<div class="flex-1 bg-physique h-[45%] shadow-[0_0_10px_#14b8a6]"></div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-slate-800/40 p-3 rounded-lg border border-slate-700/50">
+<p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Body Fat</p>
+<p class="text-xl font-black text-white">14.2% <span class="text-xs text-emerald-400 ml-1">▼0.4</span></p>
+</div>
+<div class="bg-slate-800/40 p-3 rounded-lg border border-slate-700/50">
+<p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Lean Mass</p>
+<p class="text-xl font-black text-white">72.4kg <span class="text-xs text-emerald-400 ml-1">▲0.2</span></p>
+</div>
+</div>
+</div>
+<!-- Strength Analytics -->
+<div class="bg-slate-900/40 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-strength">weight</span>
+<h3 class="text-xs font-bold text-white uppercase tracking-wider">Strength Volume</h3>
+</div>
+<span class="text-[10px] font-bold text-slate-400">VOLUME 32,400KG</span>
+</div>
+<div class="space-y-3">
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-[10px] font-bold">
+<span class="text-slate-300">BENCH PRESS</span>
+<span class="text-white">115kg × 5</span>
+</div>
+<div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-strength w-[90%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-[10px] font-bold">
+<span class="text-slate-300">SQUAT</span>
+<span class="text-white">160kg × 3</span>
+</div>
+<div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-strength w-[82%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-[10px] font-bold">
+<span class="text-slate-300">DEADLIFT</span>
+<span class="text-white">195kg × 1</span>
+</div>
+<div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-strength w-[95%]"></div>
+</div>
+</div>
+</div>
+<div class="bg-strength/10 border border-strength/20 p-3 rounded-lg flex items-center justify-between">
+<span class="text-xs font-bold text-strength">Projected Max (SBD)</span>
+<span class="text-lg font-black text-white tracking-tighter">485kg</span>
+</div>
+</div>
+<!-- Financial Terminal -->
+<div class="bg-slate-900/40 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-finance">payments</span>
+<h3 class="text-xs font-bold text-white uppercase tracking-wider">Financial Terminal</h3>
+</div>
+<span class="material-symbols-outlined text-xs text-slate-500">lock</span>
+</div>
+<div class="space-y-4 flex-1">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-lg bg-finance/20 flex items-center justify-center text-finance">
+<span class="material-symbols-outlined">rocket</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-baseline mb-1">
+<span class="text-xs font-bold text-white">Turbo Fund</span>
+<span class="text-[10px] font-bold text-slate-400">£2,850 / £3,500</span>
+</div>
+<div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-finance w-[81%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">savings</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-baseline mb-1">
+<span class="text-xs font-bold text-white">Safety Buffer</span>
+<span class="text-[10px] font-bold text-slate-400">£12,000 / £12,000</span>
+</div>
+<div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-full"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-auto border-t border-slate-800 pt-4 grid grid-cols-2">
+<div>
+<p class="text-[9px] text-slate-500 font-bold uppercase">Projected Freedom</p>
+<p class="text-xs font-bold text-white">AUG 2031</p>
+</div>
+<div class="text-right">
+<p class="text-[9px] text-slate-500 font-bold uppercase">Savings Rate</p>
+<p class="text-xs font-bold text-emerald-400">62%</p>
+</div>
+</div>
+</div>
+<!-- Nutrition Adherence -->
+<div class="bg-slate-900/40 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500">restaurant</span>
+<h3 class="text-xs font-bold text-white uppercase tracking-wider">Nutrition Adherence</h3>
+</div>
+<div class="flex gap-1">
+<span class="size-1.5 rounded-full bg-emerald-500"></span>
+<span class="size-1.5 rounded-full bg-emerald-500"></span>
+<span class="size-1.5 rounded-full bg-red-500"></span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div class="flex flex-col items-center p-2 bg-slate-800/30 rounded-lg">
+<span class="text-[9px] font-bold text-slate-500 mb-1">PROTEIN</span>
+<span class="text-sm font-black text-white">210g</span>
+<span class="text-[8px] text-emerald-400 mt-1">100%</span>
+</div>
+<div class="flex flex-col items-center p-2 bg-slate-800/30 rounded-lg">
+<span class="text-[9px] font-bold text-slate-500 mb-1">CARBS</span>
+<span class="text-sm font-black text-white">340g</span>
+<span class="text-[8px] text-amber-400 mt-1">92%</span>
+</div>
+<div class="flex flex-col items-center p-2 bg-slate-800/30 rounded-lg">
+<span class="text-[9px] font-bold text-slate-500 mb-1">FATS</span>
+<span class="text-sm font-black text-white">85g</span>
+<span class="text-[8px] text-emerald-400 mt-1">98%</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between text-[10px] font-bold uppercase">
+<span class="text-slate-400">Daily Calorie Target</span>
+<span class="text-white">2,850 / 3,000</span>
+</div>
+<div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50 p-0.5">
+<div class="h-full bg-gradient-to-r from-emerald-500 to-primary rounded-full" style="width: 95%"></div>
+</div>
+</div>
+</div>
+<!-- Consistency Tracker -->
+<div class="md:col-span-2 bg-slate-900/40 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-habits">calendar_today</span>
+<h3 class="text-xs font-bold text-white uppercase tracking-wider">Consistency Tracker</h3>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="size-2 rounded-sm bg-slate-800"></span>
+<span class="size-2 rounded-sm bg-habits/30"></span>
+<span class="size-2 rounded-sm bg-habits/60"></span>
+<span class="size-2 rounded-sm bg-habits"></span>
+<span class="text-[9px] text-slate-500 font-bold ml-1 uppercase">Density</span>
+</div>
+</div>
+</div>
+<div class="flex-1 grid grid-cols-[repeat(24,1fr)] gap-1">
+<!-- Heatmap Grid Mockup -->
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits/60 rounded-sm"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-slate-800 rounded-sm"></div>
+<div class="aspect-square bg-habits/40 rounded-sm"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-slate-800 rounded-sm"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits/80 rounded-sm"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<!-- Row 2 -->
+<div class="aspect-square bg-habits/40 rounded-sm"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits/20 rounded-sm"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits/80 rounded-sm"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+<div class="aspect-square bg-habits rounded-sm shadow-[0_0_5px_rgba(139,92,246,0.3)]"></div>
+</div>
+<div class="flex gap-6 mt-2">
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-slate-500 font-bold uppercase">Gym Streak</span>
+<span class="text-xs font-black text-habits">14 DAYS</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-slate-500 font-bold uppercase">Sleep Opt.</span>
+<span class="text-xs font-black text-habits">8h 12m</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-slate-500 font-bold uppercase">Meditation</span>
+<span class="text-xs font-black text-habits">5 DAYS</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Global Footer Status -->
+<footer class="max-w-[1440px] mx-auto px-6 py-8 border-t border-slate-800/50 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-500">
+<div class="flex items-center gap-4">
+<p class="text-[10px] font-bold tracking-widest uppercase">System Entropy: <span class="text-emerald-500">LOW</span></p>
+<span class="size-1 bg-slate-700 rounded-full"></span>
+<p class="text-[10px] font-bold tracking-widest uppercase">Uptime: 242:14:02</p>
+</div>
+<p class="text-[10px] font-bold tracking-[0.3em] uppercase opacity-40">Continuity protocol established</p>
+<div class="flex items-center gap-2">
+<p class="text-[10px] font-bold">LIFEOS v2.4.0</p>
+<div class="bg-primary/20 p-1 px-2 rounded-lg">
+<p class="text-[8px] font-bold text-primary">ENCRYPTED</p>
+</div>
+</div>
+</footer>
+</body></html>
