@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import type { Workout, WorkoutSet, Exercise } from "@/lib/supabase/types";
+
+type WorkoutWithSets = Workout & { sets: WorkoutSet[] };
 
 export async function GET() {
   const supabase = createClient();
@@ -10,7 +13,7 @@ export async function GET() {
   }
 
   // Get primary exercises
-  const { data: exercises } = await supabase
+  const { data: exercisesRaw } = await supabase
     .from("exercises")
     .select("*")
     .eq("user_id", user.id)
@@ -18,14 +21,16 @@ export async function GET() {
     .eq("active", true)
     .order("display_order", { ascending: true })
     .limit(3);
+  const exercises = exercisesRaw as Exercise[] | null;
 
   // Get last 8 weeks of workouts with sets
-  const { data: workouts } = await supabase
+  const { data: workoutsRaw } = await supabase
     .from("workouts")
     .select("*, sets:workout_sets(*)")
     .eq("user_id", user.id)
     .order("logged_at", { ascending: true })
     .limit(56);
+  const workouts = workoutsRaw as WorkoutWithSets[] | null;
 
   // Also get all workout_sets to compute correlation data
   const { data: allSets } = await supabase

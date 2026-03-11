@@ -60,7 +60,7 @@ export async function PATCH(
 
   const { data, error } = await supabase
     .from("exercises")
-    .update(body)
+    .update(body as never)
     .eq("id", params.id)
     .eq("user_id", user.id)
     .select()
@@ -70,5 +70,5 @@ export async function PATCH(
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  return Response.json({ ...data, warning });
+  return Response.json({ ...(data as object), warning });
 }

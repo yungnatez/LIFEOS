@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { calcSavingsForecast } from "@/lib/calculations/forecasts";
+import type { Finance, User } from "@/lib/supabase/types";
 
 export async function GET() {
   const supabase = createClient();
@@ -25,8 +26,8 @@ export async function GET() {
       .eq("category", "finance"),
   ]);
 
-  const userData = userRes.data;
-  const finance = financesRes.data?.[0] ?? null;
+  const userData = userRes.data as User | null;
+  const finance = (financesRes.data?.[0] ?? null) as Finance | null;
 
   const totalCurrentPence = finance
     ? finance.turbo_fund_pence +

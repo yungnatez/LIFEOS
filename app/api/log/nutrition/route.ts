@@ -26,11 +26,12 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "calories is required" }, { status: 400 });
   }
 
-  const { data: userData } = await supabase
+  const { data: userDataRaw } = await supabase
     .from("users")
     .select("calorie_target")
     .eq("id", user.id)
     .single();
+  const userData = userDataRaw as { calorie_target: number } | null;
 
   const calorie_target = userData?.calorie_target ?? 3000;
   const adherence_pct = (body.calories / calorie_target) * 100;
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
         carbs_g: body.carbs_g ?? null,
         fats_g: body.fats_g ?? null,
         adherence_pct: Math.round(adherence_pct * 100) / 100,
-      },
+      } as never,
       { onConflict: "user_id,log_date" }
     )
     .select()

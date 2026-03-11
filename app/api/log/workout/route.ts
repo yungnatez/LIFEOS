@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import type { Workout } from "@/lib/supabase/types";
 
 interface SetInput {
   exercise_id: string;
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
       user_id: user.id,
       total_volume_kg,
       notes: body.notes ?? null,
-    })
+    } as never)
     .select()
     .single();
 
@@ -49,9 +50,10 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+  const workoutRow = workout as Workout;
 
   const setsToInsert = body.sets.map((s) => ({
-    workout_id: workout.id,
+    workout_id: workoutRow.id,
     exercise_id: s.exercise_id,
     weight_kg: s.weight_kg,
     reps: s.reps,
@@ -61,12 +63,12 @@ export async function POST(req: NextRequest) {
 
   const { data: sets, error: setsError } = await supabase
     .from("workout_sets")
-    .insert(setsToInsert)
+    .insert(setsToInsert as never)
     .select();
 
   if (setsError) {
     return Response.json({ error: setsError.message }, { status: 500 });
   }
 
-  return Response.json({ ...workout, sets });
+  return Response.json({ ...workoutRow, sets });
 }

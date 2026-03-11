@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { Finance } from "@/lib/supabase/types";
 
 export async function getLatestBalances(userId: string) {
   if (process.env.ACTUAL_ENABLED === "true") {
@@ -12,7 +13,7 @@ export async function getLatestBalances(userId: string) {
     .order("logged_at", { ascending: false })
     .limit(1)
     .single();
-  return data;
+  return data as Finance | null;
 }
 
 export async function getMonthlyFlow(userId: string, months = 12) {
@@ -23,7 +24,7 @@ export async function getMonthlyFlow(userId: string, months = 12) {
     .eq("user_id", userId)
     .order("log_date", { ascending: false })
     .limit(months);
-  return data ?? [];
+  return (data ?? []) as Finance[];
 }
 
 export async function getSavingsRate(userId: string) {

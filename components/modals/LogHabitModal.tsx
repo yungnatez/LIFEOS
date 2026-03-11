@@ -5,9 +5,10 @@ import { useState } from "react";
 interface LogHabitModalProps {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function LogHabitModal({ open, onClose }: LogHabitModalProps) {
+export default function LogHabitModal({ open, onClose, onSuccess }: LogHabitModalProps) {
   const [form, setForm] = useState({
     gym: false,
     diet_adherent: false,
@@ -16,6 +17,8 @@ export default function LogHabitModal({ open, onClose }: LogHabitModalProps) {
     deep_work_hours: "4.0",
     vitamin_intake: false,
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
 
@@ -45,17 +48,37 @@ export default function LogHabitModal({ open, onClose }: LogHabitModalProps) {
   const status: "full" | "partial" | "missed" =
     completed === 6 ? "full" : completed > 0 ? "partial" : "missed";
 
-  const statusColors = {
-    full: "#10b981",
-    partial: "#f59e0b",
-    missed: "#ef4444",
-  };
+  const statusColors = { full: "#10b981", partial: "#f59e0b", missed: "#ef4444" };
   const statusLabels = { full: "FULL", partial: "PARTIAL", missed: "MISSED" };
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    console.log("Log habit:", { ...form, completion_status: status });
-    onClose();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/log/habit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gym: form.gym,
+          diet_adherent: form.diet_adherent,
+          sleep_hours: parseFloat(form.sleep_hours),
+          meditation: form.meditation,
+          deep_work_hours: parseFloat(form.deep_work_hours),
+          vitamin_intake: form.vitamin_intake,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Failed to save");
+      }
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -69,14 +92,7 @@ export default function LogHabitModal({ open, onClose }: LogHabitModalProps) {
             onClick={onClose}
             className="text-[#64748b] hover:text-white transition-colors"
           >
-            <svg
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -87,17 +103,13 @@ export default function LogHabitModal({ open, onClose }: LogHabitModalProps) {
         <form onSubmit={handleSubmit} className="space-y-3">
           {booleanFields.map((f) => (
             <div key={f.key} className="flex items-center justify-between py-1">
-              <span className="text-sm font-medium text-[#f1f5f9]">
-                {f.label}
-              </span>
+              <span className="text-sm font-medium text-[#f1f5f9]">{f.label}</span>
               <div className="flex gap-2">
                 {([true, false] as const).map((val) => (
                   <button
                     key={String(val)}
                     type="button"
-                    onClick={() =>
-                      setForm((prev) => ({ ...prev, [f.key]: val }))
-                    }
+                    onClick={() => setForm((prev) => ({ ...prev, [f.key]: val }))}
                     className={`px-3 py-1 text-[10px] font-extrabold rounded transition-colors ${
                       form[f.key] === val
                         ? val
@@ -114,49 +126,35 @@ export default function LogHabitModal({ open, onClose }: LogHabitModalProps) {
           ))}
 
           <div className="flex items-center justify-between py-1">
-            <span className="text-sm font-medium text-[#f1f5f9]">
-              Sleep Hours
-            </span>
+            <span className="text-sm font-medium text-[#f1f5f9]">Sleep Hours</span>
             <input
               type="number"
               step="0.25"
               value={form.sleep_hours}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, sleep_hours: e.target.value }))
-              }
+              onChange={(e) => setForm((prev) => ({ ...prev, sleep_hours: e.target.value }))}
               className="w-20 bg-[#1e293b] border border-[#1E2D45] rounded px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-[#8b5cf6]"
             />
           </div>
 
           <div className="flex items-center justify-between py-1">
-            <span className="text-sm font-medium text-[#f1f5f9]">
-              Deep Work Hours
-            </span>
+            <span className="text-sm font-medium text-[#f1f5f9]">Deep Work Hours</span>
             <input
               type="number"
               step="0.25"
               value={form.deep_work_hours}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  deep_work_hours: e.target.value,
-                }))
-              }
+              onChange={(e) => setForm((prev) => ({ ...prev, deep_work_hours: e.target.value }))}
               className="w-20 bg-[#1e293b] border border-[#1E2D45] rounded px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-[#8b5cf6]"
             />
           </div>
 
           <div className="flex items-center justify-between py-3 mt-2 border-t border-[#1E2D45]">
-            <span className="text-[10px] font-extrabold uppercase text-[#64748b]">
-              Completion
-            </span>
-            <span
-              className="text-sm font-extrabold"
-              style={{ color: statusColors[status] }}
-            >
+            <span className="text-[10px] font-extrabold uppercase text-[#64748b]">Completion</span>
+            <span className="text-sm font-extrabold" style={{ color: statusColors[status] }}>
               {statusLabels[status]}
             </span>
           </div>
+
+          {error && <p className="text-xs text-[#ef4444]">{error}</p>}
 
           <div className="flex gap-3">
             <button
@@ -168,9 +166,10 @@ export default function LogHabitModal({ open, onClose }: LogHabitModalProps) {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 text-xs font-extrabold text-white bg-[#8b5cf6] rounded-lg hover:bg-[#8b5cf6]/90 transition-colors"
+              disabled={submitting}
+              className="flex-1 px-4 py-2 text-xs font-extrabold text-white bg-[#8b5cf6] rounded-lg hover:bg-[#8b5cf6]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save
+              {submitting ? "Saving…" : "Save"}
             </button>
           </div>
         </form>

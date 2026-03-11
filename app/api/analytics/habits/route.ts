@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { Habit } from "@/lib/supabase/types";
 
 export async function GET() {
   const supabase = createClient();
@@ -23,7 +24,7 @@ export async function GET() {
   // Build per-habit matrix (6 habits × 90 days)
   type HabitStatus = "full" | "partial" | "missed";
   const habitKeys: {
-    key: keyof typeof habits[0];
+    key: keyof Habit;
     label: string;
     threshold?: number;
   }[] = [

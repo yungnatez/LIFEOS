@@ -15,7 +15,7 @@ export async function PATCH(
 
   const { data, error } = await supabase
     .from("alerts")
-    .update({ read: true })
+    .update({ read: true } as never)
     .eq("id", params.id)
     .eq("user_id", user.id)
     .select()

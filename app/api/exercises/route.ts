@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       is_primary: body.is_primary ?? false,
       display_order: body.display_order ?? 99,
       active: true,
-    })
+    } as never)
     .select()
     .single();
 
@@ -99,5 +99,5 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  return Response.json({ ...data, warning });
+  return Response.json({ ...(data as object), warning });
 }

@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       progress_pct: 0,
       on_track: true,
       exercise_id: body.exercise_id ?? null,
-    })
+    } as never)
     .select()
     .single();
 

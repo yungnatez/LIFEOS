@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { calcPhysiqueScore } from "@/lib/calculations/mission-score";
 import { calcMissionScore } from "@/lib/calculations/mission-score";
 import { calcHabitScore } from "@/lib/calculations/habit-completion";
+import type { User, WeightLog, Goal, Habit, SystemState } from "@/lib/supabase/types";
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
       weight_kg: body.weight_kg,
       body_fat_pct: body.body_fat_pct ?? null,
       lean_mass_kg: lean_mass_kg != null ? Math.round(lean_mass_kg * 100) / 100 : null,
-    })
+    } as never)
     .select()
     .single();
 
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Recalculate physique score
-  const [{ data: userData }, { data: weightLogs }, { data: goals }, { data: habits }] =
+  const [{ data: userDataRaw }, { data: weightLogsRaw }, { data: goalsRaw }, { data: habitsRaw }] =
     await Promise.all([
       supabase.from("users").select("*").eq("id", user.id).single(),
       supabase
@@ -62,15 +63,20 @@ export async function POST(req: NextRequest) {
         .order("habit_date", { ascending: false })
         .limit(30),
     ]);
+  const userData = userDataRaw as User | null;
+  const weightLogs = (weightLogsRaw ?? []) as WeightLog[];
+  const goals = (goalsRaw ?? []) as Goal[];
+  const habits = (habitsRaw ?? []) as Habit[];
 
-  if (userData && weightLogs) {
+  if (userData && weightLogs.length > 0) {
     const physique_score = calcPhysiqueScore(weightLogs, userData);
-    const habit_score = calcHabitScore(habits ?? []);
-    const { data: ss } = await supabase
+    const habit_score = calcHabitScore(habits);
+    const { data: ssRaw } = await supabase
       .from("system_state")
       .select("*")
       .eq("user_id", user.id)
       .single();
+    const ss = ssRaw as SystemState | null;
 
     if (ss) {
       const mission_score = calcMissionScore(
@@ -86,11 +92,11 @@ export async function POST(req: NextRequest) {
           habit_score,
           mission_score,
           last_updated: new Date().toISOString(),
-        })
+        } as never)
         .eq("user_id", user.id);
 
       // Update physique goals
-      for (const goal of (goals ?? []).filter(
+      for (const goal of goals.filter(
         (g) => g.category === "physique" && g.status === "active"
       )) {
         const start = goal.start_value ?? goal.current_value;
@@ -103,7 +109,7 @@ export async function POST(req: NextRequest) {
             current_value: body.weight_kg,
             progress_pct,
             status: progress_pct >= 100 ? "complete" : "active",
-          })
+          } as never)
           .eq("id", goal.id);
       }
     }

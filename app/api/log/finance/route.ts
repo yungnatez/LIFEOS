@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import type { Goal, Finance } from "@/lib/supabase/types";
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
           savings_rate_pct != null
             ? Math.round(savings_rate_pct * 100) / 100
             : null,
-      },
+      } as never,
       { onConflict: "user_id,log_date" }
     )
     .select()
@@ -58,25 +59,29 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
+  const financeRow = row as Finance;
+
   // Update finance goals progress
-  const { data: goals } = await supabase
+  const { data: goalsRaw } = await supabase
     .from("goals")
     .select("*")
     .eq("user_id", user.id)
     .eq("category", "finance")
     .eq("status", "active");
 
-  for (const goal of goals ?? []) {
+  const goals = (goalsRaw ?? []) as Goal[];
+
+  for (const goal of goals) {
     let current_value = goal.current_value;
     if (goal.title.toLowerCase().includes("turbo")) {
-      current_value = (row.turbo_fund_pence ?? 0) / 100;
+      current_value = (financeRow.turbo_fund_pence ?? 0) / 100;
     } else if (
       goal.title.toLowerCase().includes("safety") ||
       goal.title.toLowerCase().includes("buffer")
     ) {
-      current_value = (row.safety_buffer_pence ?? 0) / 100;
+      current_value = (financeRow.safety_buffer_pence ?? 0) / 100;
     } else if (goal.title.toLowerCase().includes("invest")) {
-      current_value = (row.investment_pence ?? 0) / 100;
+      current_value = (financeRow.investment_pence ?? 0) / 100;
     }
     const progress_pct = Math.min(
       100,
@@ -88,9 +93,9 @@ export async function POST(req: NextRequest) {
         current_value,
         progress_pct,
         status: progress_pct >= 100 ? "complete" : "active",
-      })
+      } as never)
       .eq("id", goal.id);
   }
 
-  return Response.json(row);
+  return Response.json(financeRow);
 }

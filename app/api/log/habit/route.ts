@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
         deep_work_hours: body.deep_work_hours ?? null,
         vitamin_intake: body.vitamin_intake ?? false,
         completion_status,
-      },
+      } as never,
       { onConflict: "user_id,habit_date" }
     )
     .select()

@@ -5,22 +5,47 @@ import { useState } from "react";
 interface LogNutritionModalProps {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function LogNutritionModal({ open, onClose }: LogNutritionModalProps) {
+export default function LogNutritionModal({ open, onClose, onSuccess }: LogNutritionModalProps) {
   const [form, setForm] = useState({
     calories: "",
     protein: "",
     carbs: "",
     fats: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    console.log("Log nutrition:", form);
-    onClose();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/log/nutrition", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          calories: parseInt(form.calories),
+          protein_g: form.protein ? parseFloat(form.protein) : undefined,
+          carbs_g: form.carbs ? parseFloat(form.carbs) : undefined,
+          fats_g: form.fats ? parseFloat(form.fats) : undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Failed to save");
+      }
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const fields: Array<{
@@ -47,14 +72,7 @@ export default function LogNutritionModal({ open, onClose }: LogNutritionModalPr
             onClick={onClose}
             className="text-[#64748b] hover:text-white transition-colors"
           >
-            <svg
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -79,6 +97,7 @@ export default function LogNutritionModal({ open, onClose }: LogNutritionModalPr
               />
             </div>
           ))}
+          {error && <p className="text-xs text-[#ef4444]">{error}</p>}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -89,9 +108,10 @@ export default function LogNutritionModal({ open, onClose }: LogNutritionModalPr
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 text-xs font-extrabold text-white bg-[#f59e0b] rounded-lg hover:bg-[#f59e0b]/90 transition-colors"
+              disabled={submitting}
+              className="flex-1 px-4 py-2 text-xs font-extrabold text-white bg-[#f59e0b] rounded-lg hover:bg-[#f59e0b]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save
+              {submitting ? "Saving…" : "Save"}
             </button>
           </div>
         </form>

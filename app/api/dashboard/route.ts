@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { LiftSummary, HabitDay, FinanceSummary } from "@/lib/supabase/types";
+import type { LiftSummary, HabitDay, FinanceSummary, Goal, WeightLog, Habit, Finance, NutritionLog, SystemState, Alert, User, Exercise } from "@/lib/supabase/types";
 import { calcStreaks } from "@/lib/calculations/habit-completion";
 import { totalVolumeLastNDays } from "@/lib/calculations/mission-score";
 
@@ -22,6 +22,7 @@ export async function GET() {
     financesRes,
     exercisesRes,
     alertsRes,
+    userRes,
   ] = await Promise.all([
     supabase
       .from("system_state")
@@ -77,20 +78,15 @@ export async function GET() {
       .eq("read", false)
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase.from("users").select("*").eq("id", user.id).single(),
   ]);
 
-  const goals = goalsRes.data ?? [];
-  const weightLogs = weightLogsRes.data ?? [];
-  const workouts = (workoutsRes.data ?? []) as {
-    id: string;
-    user_id: string;
-    logged_at: string;
-    total_volume_kg: number;
-    notes: string | null;
-    sets: { weight_kg: number; reps: number; exercise_id: string; estimated_1rm_kg: number | null; id: string; workout_id: string; set_number: number }[];
-  }[];
-  const habits = habitsRes.data ?? [];
-  const finance = financesRes.data?.[0] ?? null;
+  type WorkoutRow = { id: string; user_id: string; logged_at: string; total_volume_kg: number; notes: string | null; sets: { weight_kg: number; reps: number; exercise_id: string; estimated_1rm_kg: number | null; id: string; workout_id: string; set_number: number }[] };
+  const goals = (goalsRes.data ?? []) as Goal[];
+  const weightLogs = (weightLogsRes.data ?? []) as WeightLog[];
+  const workouts = (workoutsRes.data ?? []) as WorkoutRow[];
+  const habits = (habitsRes.data ?? []) as Habit[];
+  const finance = (financesRes.data?.[0] ?? null) as Finance | null;
 
   // Priority goal (first active, by priority)
   const priorityGoal = goals.find((g) => g.status === "active") ?? null;
@@ -109,7 +105,7 @@ export async function GET() {
     : null;
 
   // Primary lifts with best sets
-  const primaryLifts: LiftSummary[] = (exercisesRes.data ?? []).map((ex) => {
+  const primaryLifts: LiftSummary[] = ((exercisesRes.data ?? []) as Exercise[]).map((ex) => {
     const allSets = workouts.flatMap((w) =>
       w.sets.filter((s) => s.exercise_id === ex.id)
     );
@@ -183,19 +179,20 @@ export async function GET() {
   );
 
   return Response.json({
-    systemState: systemStateRes.data,
+    systemState: systemStateRes.data as SystemState | null,
     priorityGoal: priorityGoalWithMeta,
     recentWeights: weightLogs,
     latestWeight: weightLogs[0] ?? null,
     primaryLifts,
     totalVolumeWeek: Math.round(totalVolumeWeek),
     projectedSBD: Math.round(projectedSBD),
-    latestNutrition: nutritionRes.data?.[0] ?? null,
+    latestNutrition: (nutritionRes.data?.[0] ?? null) as NutritionLog | null,
     habitHeatmap,
     streaks,
     finances,
     financialGoals: goals.filter((g) => g.category === "finance"),
     allGoals: goals,
-    unreadAlerts: alertsRes.data ?? [],
+    unreadAlerts: (alertsRes.data ?? []) as Alert[],
+    userData: userRes.data as User | null,
   });
 }

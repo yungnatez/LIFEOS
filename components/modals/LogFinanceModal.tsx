@@ -5,9 +5,10 @@ import { useState } from "react";
 interface LogFinanceModalProps {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function LogFinanceModal({ open, onClose }: LogFinanceModalProps) {
+export default function LogFinanceModal({ open, onClose, onSuccess }: LogFinanceModalProps) {
   const [form, setForm] = useState({
     turbo_fund: "",
     safety_buffer: "",
@@ -15,30 +16,38 @@ export default function LogFinanceModal({ open, onClose }: LogFinanceModalProps)
     monthly_income: "",
     monthly_expenses: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const data = {
-      turbo_fund_pence: form.turbo_fund
-        ? Math.round(parseFloat(form.turbo_fund) * 100)
-        : undefined,
-      safety_buffer_pence: form.safety_buffer
-        ? Math.round(parseFloat(form.safety_buffer) * 100)
-        : undefined,
-      investment_pence: form.investment
-        ? Math.round(parseFloat(form.investment) * 100)
-        : undefined,
-      monthly_income_pence: form.monthly_income
-        ? Math.round(parseFloat(form.monthly_income) * 100)
-        : undefined,
-      monthly_expenses_pence: form.monthly_expenses
-        ? Math.round(parseFloat(form.monthly_expenses) * 100)
-        : undefined,
-    };
-    console.log("Log finance:", data);
-    onClose();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/log/finance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          turbo_fund_pence: form.turbo_fund ? Math.round(parseFloat(form.turbo_fund) * 100) : undefined,
+          safety_buffer_pence: form.safety_buffer ? Math.round(parseFloat(form.safety_buffer) * 100) : undefined,
+          investment_pence: form.investment ? Math.round(parseFloat(form.investment) * 100) : undefined,
+          monthly_income_pence: form.monthly_income ? Math.round(parseFloat(form.monthly_income) * 100) : undefined,
+          monthly_expenses_pence: form.monthly_expenses ? Math.round(parseFloat(form.monthly_expenses) * 100) : undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Failed to save");
+      }
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const fields: Array<{ key: keyof typeof form; label: string }> = [
@@ -60,14 +69,7 @@ export default function LogFinanceModal({ open, onClose }: LogFinanceModalProps)
             onClick={onClose}
             className="text-[#64748b] hover:text-white transition-colors"
           >
-            <svg
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -83,14 +85,13 @@ export default function LogFinanceModal({ open, onClose }: LogFinanceModalProps)
                 type="number"
                 step="0.01"
                 value={form[f.key]}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, [f.key]: e.target.value }))
-                }
+                onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
                 placeholder="0.00"
                 className="w-full bg-[#1e293b] border border-[#1E2D45] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#f59e0b] transition-colors"
               />
             </div>
           ))}
+          {error && <p className="text-xs text-[#ef4444]">{error}</p>}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -101,9 +102,10 @@ export default function LogFinanceModal({ open, onClose }: LogFinanceModalProps)
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 text-xs font-extrabold text-white bg-[#f59e0b] rounded-lg hover:bg-[#f59e0b]/90 transition-colors"
+              disabled={submitting}
+              className="flex-1 px-4 py-2 text-xs font-extrabold text-white bg-[#f59e0b] rounded-lg hover:bg-[#f59e0b]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save
+              {submitting ? "Saving…" : "Save"}
             </button>
           </div>
         </form>
