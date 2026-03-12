@@ -118,7 +118,7 @@ export async function GET() {
         .toLowerCase()
         .replace(/\s*\(.*?\)/g, "")
         .split(/\s+/)
-        .filter((t) => t.length > 3);
+        .filter((t) => t.length >= 3);
       const fuzzyMatch = allExercises.find(
         (other) =>
           other.id !== ex.id &&
