@@ -18,9 +18,22 @@ type Tab = "weight" | "savings" | "correlation" | "habits";
 type HabitStatus = "full" | "partial" | "missed";
 
 interface WeightChartPoint {
-  month: string;
-  weight: number;
-  forecast?: boolean;
+  label: string;
+  actualWeight: number | null;
+  forecastWeight: number | null;
+}
+
+interface WeightStats {
+  slopeKgPerWeek: number;
+  rSquared: number;
+  currentWeight: number | null;
+  currentBodyFat: number | null;
+  targetWeight: number | null;
+  targetDate: string | null;
+  projectedTargetDate: string | null;
+  onTrack: boolean | null;
+  avgCalories: number | null;
+  avgProtein: number | null;
 }
 
 interface SavingsPoint {
@@ -74,8 +87,10 @@ export default function AnalyticsClient() {
   const [activeTab, setActiveTab] = useState<Tab>("weight");
 
   // Weight tab state
-  const [weightData, setWeightData] = useState<WeightChartPoint[]>([]);
-  const [modelVars, setModelVars] = useState<ModelVar[]>([]);
+  const [weightData, setWeightData]   = useState<WeightChartPoint[]>([]);
+  const [weightStats, setWeightStats] = useState<WeightStats | null>(null);
+  const [modelVars, setModelVars]     = useState<ModelVar[]>([]);
+  const [weightInsight, setWeightInsight] = useState("");
   const [weightLoading, setWeightLoading] = useState(false);
 
   // Savings tab state
@@ -100,21 +115,33 @@ export default function AnalyticsClient() {
     setWeightLoading(true);
     fetch("/api/analytics/weight")
       .then((r) => r.json())
-      .then((d: { forecast?: { date: string; weight_kg: number; forecast: boolean }[]; user?: { calorie_target: number; protein_target_g: number } }) => {
-        const points: WeightChartPoint[] = (d.forecast ?? []).map((p) => ({
-          month: new Date(p.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }).toUpperCase(),
-          weight: Math.round(p.weight_kg * 10) / 10,
-          forecast: p.forecast,
-        }));
+      .then((d: {
+        forecast?: { date: string; weight_kg: number; forecast: boolean }[];
+        stats?: WeightStats;
+        modelVars?: ModelVar[];
+        insight?: string;
+      }) => {
+        const raw = d.forecast ?? [];
+        // Build dual-series data: bridge point gets both actual + forecast
+        const points: WeightChartPoint[] = raw.map((p, i) => {
+          const isForecast = p.forecast;
+          // The bridge: last actual point = first forecast point (same weight, continuity)
+          const prevIsForecast = i > 0 ? raw[i - 1].forecast : false;
+          const isBridge = !isForecast && i < raw.length - 1 && raw[i + 1]?.forecast;
+          return {
+            label: new Date(p.date).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+            }).toUpperCase(),
+            actualWeight:   !isForecast || isBridge ? Math.round(p.weight_kg * 10) / 10 : null,
+            forecastWeight: isForecast || isBridge   ? Math.round(p.weight_kg * 10) / 10 : null,
+          };
+          void prevIsForecast;
+        });
         setWeightData(points);
-        if (d.user) {
-          setModelVars([
-            { name: "Calorie Target",  val: `${d.user.calorie_target} kcal`, pct: 75, color: PRIMARY },
-            { name: "Protein Target",  val: `${d.user.protein_target_g}g / day`, pct: 100, color: "#10b981" },
-            { name: "Activity Multiplier", val: "1.45x", pct: 72, color: "#8b5cf6" },
-            { name: "Sleep Quality",   val: "7.5h avg", pct: 80, color: "#14b8a6" },
-          ]);
-        }
+        if (d.stats)    setWeightStats(d.stats);
+        if (d.modelVars) setModelVars(d.modelVars);
+        if (d.insight)   setWeightInsight(d.insight);
       })
       .catch(() => {})
       .finally(() => setWeightLoading(false));
@@ -246,21 +273,34 @@ export default function AnalyticsClient() {
                   <span style={{ fontSize: 16 }}>📊</span>
                   <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>Weight Prediction Model</span>
                 </div>
-                <p style={{ fontSize: 10, color: MUTED }}>Projected trend based on current intake and training</p>
+                <p style={{ fontSize: 10, color: MUTED }}>
+                  {weightStats?.slopeKgPerWeek !== undefined
+                    ? `Trending ${weightStats.slopeKgPerWeek >= 0 ? "+" : ""}${weightStats.slopeKgPerWeek}kg/wk · linear regression on ${weightData.filter(d => d.actualWeight != null).length} readings`
+                    : "Projected trend based on current intake and training"}
+                </p>
               </div>
-              <Badge color={EMERALD}>On Track</Badge>
+              {weightStats?.onTrack === true  && <Badge color={EMERALD}>✓ On Track</Badge>}
+              {weightStats?.onTrack === false && <Badge color="#f59e0b">⚠ Behind</Badge>}
+              {weightStats?.onTrack === null  && <Badge color={MUTED}>Tracking</Badge>}
             </div>
             {weightLoading ? (
-              <div className="h-64 bg-[#1e293b] rounded-lg animate-pulse" />
+              <div className="h-72 bg-[#1e293b] rounded-lg animate-pulse" />
             ) : (
-              <WeightChart data={weightData} />
+              <WeightChart
+                data={weightData}
+                targetWeight={weightStats?.targetWeight ?? null}
+                projectedDate={weightStats?.projectedTargetDate ?? null}
+                slopeKgPerWeek={weightStats?.slopeKgPerWeek ?? 0}
+                onTrack={weightStats?.onTrack ?? null}
+                rSquared={weightStats?.rSquared ?? 0}
+              />
             )}
           </Card>
 
           <Card>
             <ModelVariables
               variables={modelVars}
-              insight="Your metabolic rate has adjusted due to increased resistance training frequency."
+              insight={weightInsight}
             />
           </Card>
         </div>

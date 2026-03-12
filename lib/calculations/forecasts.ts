@@ -1,9 +1,17 @@
 import type { WeightLog } from "@/lib/supabase/types";
 
 export type WeightForecastPoint = {
-  month: string;
-  weight: number;
-  forecast?: boolean;
+  date: string;       // ISO datetime string
+  weight_kg: number;
+  forecast: boolean;
+};
+
+export type WeightForecastResult = {
+  points: WeightForecastPoint[];
+  slopeKgPerDay: number;   // rate of change in kg/day (positive = gaining)
+  intercept: number;       // regression intercept (weight at t=0)
+  t0: number;              // epoch ms of first reading (for evaluating regression)
+  rSquared: number;        // 0–1 fit quality
 };
 
 export type SavingsForecastPoint = {
@@ -12,53 +20,63 @@ export type SavingsForecastPoint = {
   compound: number;
 };
 
-export function calcWeightForecast(logs: WeightLog[]): WeightForecastPoint[] {
-  if (logs.length === 0) return [];
+export function calcWeightForecast(logs: WeightLog[]): WeightForecastResult {
+  const empty: WeightForecastResult = { points: [], slopeKgPerDay: 0, intercept: 0, t0: 0, rSquared: 0 };
+  if (logs.length === 0) return empty;
 
   const sorted = [...logs].sort(
-    (a, b) =>
-      new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime()
+    (a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime()
   );
 
   const historical: WeightForecastPoint[] = sorted.map((l) => ({
-    month: new Date(l.logged_at)
-      .toLocaleString("en-GB", { month: "short" })
-      .toUpperCase(),
-    weight: l.weight_kg,
+    date: l.logged_at,
+    weight_kg: l.weight_kg,
     forecast: false,
   }));
 
-  if (logs.length < 2) return historical;
+  if (sorted.length < 2) return { ...empty, points: historical };
 
-  // Linear regression (least squares)
-  const n = sorted.length;
-  const xs = sorted.map((_, i) => i);
+  // Use days since first reading as x so regression respects real time gaps
+  const t0 = new Date(sorted[0].logged_at).getTime();
+  const xs = sorted.map((l) => (new Date(l.logged_at).getTime() - t0) / 86400000);
   const ys = sorted.map((l) => l.weight_kg);
-  const sumX = xs.reduce((a, b) => a + b, 0);
-  const sumY = ys.reduce((a, b) => a + b, 0);
+  const n = xs.length;
+
+  const sumX  = xs.reduce((a, b) => a + b, 0);
+  const sumY  = ys.reduce((a, b) => a + b, 0);
   const sumXY = xs.reduce((s, x, i) => s + x * ys[i], 0);
   const sumX2 = xs.reduce((s, x) => s + x * x, 0);
   const denom = n * sumX2 - sumX * sumX;
-  if (denom === 0) return historical;
+  if (denom === 0) return { ...empty, points: historical };
 
-  const slope = (n * sumXY - sumX * sumY) / denom;
+  const slope     = (n * sumXY - sumX * sumY) / denom;
   const intercept = (sumY - slope * sumX) / n;
 
+  // R²
+  const yMean = sumY / n;
+  const ssTot = ys.reduce((s, y) => s + (y - yMean) ** 2, 0);
+  const ssRes = xs.reduce((s, x, i) => s + (ys[i] - (slope * x + intercept)) ** 2, 0);
+  const rSquared = ssTot > 0 ? Math.max(0, Math.min(1, 1 - ssRes / ssTot)) : 0;
+
+  // Forecast: weekly points for 13 weeks (≈3 months)
   const lastDate = new Date(sorted[sorted.length - 1].logged_at);
-  const forecast: WeightForecastPoint[] = [];
-  for (let i = 1; i <= 3; i++) {
-    const date = new Date(lastDate);
-    date.setMonth(date.getMonth() + i);
-    const weight =
-      Math.round((intercept + slope * (n - 1 + i)) * 10) / 10;
-    forecast.push({
-      month: date.toLocaleString("en-GB", { month: "short" }).toUpperCase(),
-      weight,
-      forecast: true,
-    });
+  const lastT    = xs[xs.length - 1];
+  const forecastPoints: WeightForecastPoint[] = [];
+  for (let weeks = 1; weeks <= 13; weeks++) {
+    const d = new Date(lastDate);
+    d.setDate(d.getDate() + weeks * 7);
+    const t = lastT + weeks * 7;
+    const weight_kg = Math.round((slope * t + intercept) * 10) / 10;
+    forecastPoints.push({ date: d.toISOString(), weight_kg, forecast: true });
   }
 
-  return [...historical, ...forecast];
+  return {
+    points: [...historical, ...forecastPoints],
+    slopeKgPerDay: slope,
+    intercept,
+    t0,
+    rSquared: Math.round(rSquared * 100) / 100,
+  };
 }
 
 export function calcSavingsForecast(
@@ -75,11 +93,11 @@ export function calcSavingsForecast(
   return Array.from({ length: years }, (_, i) => {
     const y = i + 1;
     const principal = current + monthly * 12 * y;
-    const compound = principal * (Math.pow(1 + apy, y) - 1);
+    const compound  = principal * (Math.pow(1 + apy, y) - 1);
     return {
-      year: String(currentYear + y),
+      year:      String(currentYear + y),
       principal: Math.round(principal),
-      compound: Math.round(compound),
+      compound:  Math.round(compound),
     };
   });
 }
