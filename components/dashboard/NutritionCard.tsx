@@ -1,7 +1,5 @@
 "use client";
 
-import EmptyState from "@/components/shared/EmptyState";
-
 interface MacroData {
   protein: number;
   proteinTarget: number;
@@ -11,46 +9,16 @@ interface MacroData {
   fatsTarget: number;
   calories: number;
   calorieTarget: number;
+  isLogged: boolean;    // false = no entry for today (fasting / not yet logged)
+  displayDate: string;  // e.g. "TODAY · 12 MAR"
 }
 
 interface NutritionCardProps {
-  data: MacroData | null;
+  data: MacroData;
   onLogNutrition?: () => void;
 }
 
 export default function NutritionCard({ data, onLogNutrition }: NutritionCardProps) {
-  if (!data) {
-    return (
-      <div className="flex flex-col gap-4 h-full">
-        <div className="flex items-center gap-2">
-          <svg
-            width="16"
-            height="16"
-            fill="none"
-            stroke="#f59e0b"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z" />
-          </svg>
-          <p className="text-xs font-extrabold text-white uppercase tracking-wider">
-            Nutrition Adherence
-          </p>
-        </div>
-        <EmptyState
-          icon="🍽️"
-          title="No nutrition logged"
-          message="Log today's nutrition to track macros"
-          action={
-            onLogNutrition
-              ? { label: "+ Log Nutrition", onClick: onLogNutrition }
-              : undefined
-          }
-        />
-      </div>
-    );
-  }
-
   const macros = [
     {
       label: "PROTEIN",
@@ -77,7 +45,8 @@ export default function NutritionCard({ data, onLogNutrition }: NutritionCardPro
 
   return (
     <div className="flex flex-col gap-4 h-full">
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex justify-between items-start">
         <div className="flex items-center gap-2">
           <svg
             width="16"
@@ -89,25 +58,46 @@ export default function NutritionCard({ data, onLogNutrition }: NutritionCardPro
           >
             <path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z" />
           </svg>
-          <p className="text-xs font-extrabold text-white uppercase tracking-wider">
-            Nutrition Adherence
-          </p>
+          <div>
+            <p className="text-xs font-extrabold text-white uppercase tracking-wider">
+              Nutrition Adherence
+            </p>
+            <p className="text-[9px] text-[#64748b] font-extrabold mt-0.5">
+              {data.displayDate}
+            </p>
+          </div>
         </div>
-        <div className="flex gap-1">
-          {[true, true, false].map((ok, i) => (
-            <span
-              key={i}
-              className={`size-1.5 rounded-full ${
-                ok ? "bg-[#10b981]" : "bg-[#ef4444]"
-              }`}
-            />
-          ))}
-        </div>
+        {/* Status indicator: fasting badge or macro dots */}
+        {data.isLogged ? (
+          <div className="flex gap-1">
+            {macros.map((m) => {
+              const ok = m.value / m.target >= 0.8;
+              return (
+                <span
+                  key={m.label}
+                  className={`size-1.5 rounded-full ${ok ? "bg-[#10b981]" : "bg-[#ef4444]"}`}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <span
+            className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded"
+            style={{
+              background: "#64748b18",
+              border: "1px solid #64748b40",
+              color: "#64748b",
+            }}
+          >
+            NO DATA
+          </span>
+        )}
       </div>
 
+      {/* Macro tiles — always shown, zeros when not logged */}
       <div className="grid grid-cols-3 gap-2">
         {macros.map((m) => {
-          const pct = Math.min(100, Math.round((m.value / m.target) * 100));
+          const pct = m.target > 0 ? Math.min(100, Math.round((m.value / m.target) * 100)) : 0;
           return (
             <div
               key={m.label}
@@ -131,6 +121,7 @@ export default function NutritionCard({ data, onLogNutrition }: NutritionCardPro
         })}
       </div>
 
+      {/* Calorie bar */}
       <div className="flex flex-col gap-2">
         <div className="flex justify-between text-[10px] font-extrabold uppercase">
           <span className="text-[#64748b]">Daily Calorie Target</span>
@@ -142,8 +133,10 @@ export default function NutritionCard({ data, onLogNutrition }: NutritionCardPro
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{
-              width: `${Math.min(100, (data.calories / data.calorieTarget) * 100)}%`,
-              background: "linear-gradient(to right, #10b981, #3b86f7)",
+              width: `${Math.min(100, data.calorieTarget > 0 ? (data.calories / data.calorieTarget) * 100 : 0)}%`,
+              background: data.isLogged
+                ? "linear-gradient(to right, #10b981, #3b86f7)"
+                : "#1e293b",
             }}
           />
         </div>

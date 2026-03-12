@@ -95,11 +95,14 @@ export default function MissionRing({
           <span className="text-[9px] font-extrabold text-[#10b981] mt-1">{trend}</span>
         </div>
       </div>
-      {/* Legend */}
+      {/* Legend with per-pillar scores */}
       <div className="grid grid-cols-4 gap-3 mt-6 w-full px-4">
         {rings.map((ring) => (
-          <div key={ring.key} className="flex flex-col items-center gap-1">
+          <div key={ring.key} className="flex flex-col items-center gap-0.5">
             <span className="size-2 rounded-full" style={{ background: ring.color }} />
+            <span className="text-[11px] font-black text-white leading-none">
+              {Math.round(scores[ring.key])}
+            </span>
             <span className="text-[9px] font-extrabold text-[#64748b]">{ring.label}</span>
           </div>
         ))}

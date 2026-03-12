@@ -131,16 +131,21 @@ function mapMilestones(goals: Goal[]) {
 }
 
 function mapNutrition(nutrition: NutritionLog | null, user: User | null) {
-  if (!nutrition || !user) return null;
+  const today = new Date();
+  const displayDate = `TODAY · ${today
+    .toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+    .toUpperCase()}`;
   return {
-    calories: nutrition.calories,
-    calorieTarget: user.calorie_target,
-    protein: nutrition.protein_g ?? 0,
-    proteinTarget: user.protein_target_g,
-    carbs: nutrition.carbs_g ?? 0,
-    carbsTarget: 370,
-    fats: nutrition.fats_g ?? 0,
-    fatsTarget: 87,
+    calories: Math.round(nutrition?.calories ?? 0),
+    calorieTarget: user?.calorie_target ?? 3000,
+    protein: Math.round(nutrition?.protein_g ?? 0),
+    proteinTarget: 210,
+    carbs: Math.round(nutrition?.carbs_g ?? 0),
+    carbsTarget: 250,
+    fats: Math.round(nutrition?.fats_g ?? 0),
+    fatsTarget: 80,
+    isLogged: nutrition !== null,
+    displayDate,
   };
 }
 
@@ -180,6 +185,7 @@ export default function DashboardClient() {
   const lifts = mapLifts(data?.primaryLifts ?? []);
   const accounts = mapAccounts(data?.finances ?? null, data?.financialGoals ?? []);
   const milestones = mapMilestones(data?.allGoals ?? []);
+  // mapNutrition always returns data (zeros + isLogged=false when no entry today)
   const nutritionData = mapNutrition(data?.latestNutrition ?? null, data?.userData ?? null);
   const habitDays = (data?.habitHeatmap ?? []).map((h) => ({
     date: h.date,
