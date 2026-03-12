@@ -313,7 +313,7 @@ export async function POST(req: NextRequest) {
   const stepsByDate: Map<string, number> = stepsMetric ? sumByDate(stepsMetric) : new Map();
   const sleepByDate: Map<string, number> = sleepMetric ? maxByDate(sleepMetric) : new Map();
 
-  const habitDatesSet = new Set<string>([...stepsByDate.keys(), ...sleepByDate.keys()]);
+  const habitDatesSet = new Set<string>([...Array.from(stepsByDate.keys()), ...Array.from(sleepByDate.keys())]);
   const habitDates = Array.from(habitDatesSet);
   console.log("[health-sync] habit dates to process:", habitDates.length);
 
