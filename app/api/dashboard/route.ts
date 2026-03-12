@@ -178,7 +178,48 @@ export async function GET() {
     0
   );
 
-  const todaySteps = habits[0]?.steps ?? 0;
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Steps: only count today's entry — if today hasn't synced yet, return 0
+  const todayHabit = habits.find((h) => h.habit_date === todayStr);
+  const todaySteps = todayHabit?.steps ?? 0;
+
+  // Nutrition: only show today's entry — if not logged yet, show empty state
+  const latestNutritionRow = (nutritionRes.data?.[0] ?? null) as NutritionLog | null;
+  const todayNutrition =
+    latestNutritionRow?.log_date === todayStr ? latestNutritionRow : null;
+
+  // Projected freedom year: months until savings reach 25× annual expenses (4% rule)
+  const userData = userRes.data as User | null;
+  const apyPct = (userData?.savings_apy_pct as number | null) ?? 7;
+  const monthlyRate = apyPct / 100 / 12;
+  let projectedFreedomYear = "—";
+  if (finance?.monthly_expenses_pence && finance.monthly_expenses_pence > 0) {
+    const fiTargetPence = finance.monthly_expenses_pence * 12 * 25;
+    const currentBalancePence =
+      (finance.turbo_fund_pence ?? 0) +
+      (finance.safety_buffer_pence ?? 0) +
+      (finance.investment_pence ?? 0);
+    const monthlySavingsPence = Math.max(
+      0,
+      (finance.monthly_income_pence ?? 0) - finance.monthly_expenses_pence
+    );
+    if (currentBalancePence >= fiTargetPence) {
+      projectedFreedomYear = "NOW";
+    } else if (monthlySavingsPence > 0) {
+      const now = new Date();
+      let balance = currentBalancePence;
+      const monthNames = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+      for (let m = 1; m <= 480; m++) {
+        balance = balance * (1 + monthlyRate) + monthlySavingsPence;
+        if (balance >= fiTargetPence) {
+          const d = new Date(now.getFullYear(), now.getMonth() + m, 1);
+          projectedFreedomYear = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+          break;
+        }
+      }
+    }
+  }
 
   return Response.json({
     systemState: systemStateRes.data as SystemState | null,
@@ -188,7 +229,7 @@ export async function GET() {
     primaryLifts,
     totalVolumeWeek: Math.round(totalVolumeWeek),
     projectedSBD: Math.round(projectedSBD),
-    latestNutrition: (nutritionRes.data?.[0] ?? null) as NutritionLog | null,
+    latestNutrition: todayNutrition,
     habitHeatmap,
     streaks,
     todaySteps,
@@ -196,6 +237,7 @@ export async function GET() {
     financialGoals: goals.filter((g) => g.category === "finance"),
     allGoals: goals,
     unreadAlerts: (alertsRes.data ?? []) as Alert[],
-    userData: userRes.data as User | null,
+    userData,
+    projectedFreedomYear,
   });
 }

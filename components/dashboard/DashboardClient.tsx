@@ -44,6 +44,7 @@ interface DashboardData {
   allGoals: Goal[];
   unreadAlerts: unknown[];
   userData: User | null;
+  projectedFreedomYear: string;
 }
 
 type ModalType = "weight" | "workout" | "nutrition" | "habit" | "finance" | null;
@@ -120,7 +121,7 @@ function mapMilestones(goals: Goal[]) {
       return {
         id: g.id,
         title: g.title,
-        date: new Date(g.target_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase(),
+        date: new Date(g.target_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" }).toUpperCase(),
         status: g.status as "complete" | "active" | "upcoming",
         progress: g.progress_pct,
         color,
@@ -285,7 +286,7 @@ export default function DashboardClient() {
           <FinancialTerminal
             accounts={accounts}
             savingsRatePct={data?.finances?.savings_rate_pct ?? 0}
-            projectedFreedomYear="AUG 2031"
+            projectedFreedomYear={data?.projectedFreedomYear ?? "—"}
             onLogFinance={() => setModal("finance")}
           />
         </Card>
