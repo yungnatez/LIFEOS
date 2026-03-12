@@ -89,11 +89,6 @@ function getLatest(byName: Map<string, HealthMetric>, name: string): Map<string,
   const m = byName.get(name);
   return m ? latestByDate(m.data) : new Map();
 }
-// avgByDate exposed for walking metrics
-function getAvg(byName: Map<string, HealthMetric>, name: string): Map<string, number> {
-  const m = byName.get(name);
-  return m ? avgByDate(m.data) : new Map();
-}
 
 export async function GET() {
   return Response.json({
