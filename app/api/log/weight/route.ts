@@ -1,9 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { calcPhysiqueScore } from "@/lib/calculations/mission-score";
-import { calcMissionScore } from "@/lib/calculations/mission-score";
-import { calcHabitScore } from "@/lib/calculations/habit-completion";
-import type { User, WeightLog, Goal, Habit, SystemState } from "@/lib/supabase/types";
+import { recalcAndPersistScores } from "@/lib/calculations/recalc-scores";
+import type { Goal } from "@/lib/supabase/types";
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
@@ -45,75 +43,31 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  // Recalculate physique score
-  const [{ data: userDataRaw }, { data: weightLogsRaw }, { data: goalsRaw }, { data: habitsRaw }] =
-    await Promise.all([
-      supabase.from("users").select("*").eq("id", user.id).single(),
-      supabase
-        .from("weight_logs")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("logged_at", { ascending: false })
-        .limit(60),
-      supabase.from("goals").select("*").eq("user_id", user.id),
-      supabase
-        .from("habits")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("habit_date", { ascending: false })
-        .limit(30),
-    ]);
-  const userData = userDataRaw as User | null;
-  const weightLogs = (weightLogsRaw ?? []) as WeightLog[];
-  const goals = (goalsRaw ?? []) as Goal[];
-  const habits = (habitsRaw ?? []) as Habit[];
+  // Update physique goal progress
+  const { data: goalsRaw } = await supabase
+    .from("goals")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("category", "physique")
+    .eq("status", "active");
 
-  if (userData && weightLogs.length > 0) {
-    const physique_score = calcPhysiqueScore(weightLogs, userData);
-    const habit_score = calcHabitScore(habits);
-    const { data: ssRaw } = await supabase
-      .from("system_state")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-    const ss = ssRaw as SystemState | null;
-
-    if (ss) {
-      const mission_score = calcMissionScore(
-        physique_score,
-        ss.strength_score,
-        ss.finance_score,
-        habit_score
-      );
-      await supabase
-        .from("system_state")
-        .update({
-          physique_score,
-          habit_score,
-          mission_score,
-          last_updated: new Date().toISOString(),
-        } as never)
-        .eq("user_id", user.id);
-
-      // Update physique goals
-      for (const goal of goals.filter(
-        (g) => g.category === "physique" && g.status === "active"
-      )) {
-        const start = goal.start_value ?? goal.current_value;
-        const range = Math.abs(goal.target_value - start);
-        const done = Math.abs(body.weight_kg - start);
-        const progress_pct = range === 0 ? 0 : Math.min(100, (done / range) * 100);
-        await supabase
-          .from("goals")
-          .update({
-            current_value: body.weight_kg,
-            progress_pct,
-            status: progress_pct >= 100 ? "complete" : "active",
-          } as never)
-          .eq("id", goal.id);
-      }
-    }
+  for (const goal of ((goalsRaw ?? []) as Goal[])) {
+    const start = goal.start_value ?? goal.current_value;
+    const range = Math.abs(goal.target_value - start);
+    const done = Math.abs(body.weight_kg - start);
+    const progress_pct = range === 0 ? 0 : Math.min(100, (done / range) * 100);
+    await supabase
+      .from("goals")
+      .update({
+        current_value: body.weight_kg,
+        progress_pct,
+        status: progress_pct >= 100 ? "complete" : "active",
+      } as never)
+      .eq("id", goal.id);
   }
+
+  // Recalculate all scores immediately
+  await recalcAndPersistScores(supabase, user.id);
 
   return Response.json(row);
 }

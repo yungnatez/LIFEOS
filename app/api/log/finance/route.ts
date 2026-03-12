@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Goal, Finance } from "@/lib/supabase/types";
+import { recalcAndPersistScores } from "@/lib/calculations/recalc-scores";
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
@@ -96,6 +97,9 @@ export async function POST(req: NextRequest) {
       } as never)
       .eq("id", goal.id);
   }
+
+  // Recalculate all scores immediately
+  await recalcAndPersistScores(supabase, user.id);
 
   return Response.json(financeRow);
 }

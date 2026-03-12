@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Workout } from "@/lib/supabase/types";
+import { recalcAndPersistScores } from "@/lib/calculations/recalc-scores";
 
 interface SetInput {
   exercise_id: string;
@@ -69,6 +70,9 @@ export async function POST(req: NextRequest) {
   if (setsError) {
     return Response.json({ error: setsError.message }, { status: 500 });
   }
+
+  // Recalculate all scores immediately so dashboard reflects this session
+  await recalcAndPersistScores(supabase, user.id);
 
   return Response.json({ ...workoutRow, sets });
 }

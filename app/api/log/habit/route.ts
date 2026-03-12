@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { calcCompletionStatus } from "@/lib/calculations/habit-completion";
+import { recalcAndPersistScores } from "@/lib/calculations/recalc-scores";
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
@@ -61,6 +62,9 @@ export async function POST(req: NextRequest) {
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
+
+  // Recalculate all scores immediately
+  await recalcAndPersistScores(supabase, user.id);
 
   return Response.json(row);
 }
