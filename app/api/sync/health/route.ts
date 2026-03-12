@@ -6,7 +6,6 @@ import type { User, Habit } from "@/lib/supabase/types";
 interface HealthEntry {
   date: string;
   qty: number;
-  // Health Auto Export v2 may also send these
   source?: string;
   min?: number;
   max?: number;
@@ -18,25 +17,60 @@ interface HealthMetric {
   data: HealthEntry[];
 }
 
-// Health Auto Export v2 top-level shape variants
 interface HealthPayloadWrapped {
-  data: {
-    metrics: HealthMetric[];
-  };
+  data: { metrics: HealthMetric[] };
 }
 interface HealthPayloadFlat {
   metrics: HealthMetric[];
 }
 type HealthPayload = HealthPayloadWrapped | HealthPayloadFlat | HealthMetric[];
 
+// "2026-03-11 22:00:00 +0000" → "2026-03-11"
 function toDateStr(dateStr: string): string {
   return dateStr.slice(0, 10);
 }
 
-function extractMetrics(body: HealthPayload): HealthMetric[] | null {
-  if (Array.isArray(body)) {
-    return body;
+// Sum all qty values for the same date
+function sumByDate(entries: HealthEntry[]): Map<string, number> {
+  const totals = new Map<string, number>();
+  for (const e of entries) {
+    const d = toDateStr(e.date);
+    totals.set(d, (totals.get(d) ?? 0) + e.qty);
   }
+  return totals;
+}
+
+// Average qty values for the same date
+function avgByDate(entries: HealthEntry[]): Map<string, number> {
+  const sums = new Map<string, number>();
+  const counts = new Map<string, number>();
+  for (const e of entries) {
+    const d = toDateStr(e.date);
+    sums.set(d, (sums.get(d) ?? 0) + e.qty);
+    counts.set(d, (counts.get(d) ?? 0) + 1);
+  }
+  const result = new Map<string, number>();
+  for (const [d, sum] of Array.from(sums.entries())) {
+    result.set(d, sum / (counts.get(d) ?? 1));
+  }
+  return result;
+}
+
+// For point-in-time metrics: take the latest entry per date by timestamp string
+function latestByDate(entries: HealthEntry[]): Map<string, number> {
+  const best = new Map<string, { ts: string; qty: number }>();
+  for (const e of entries) {
+    const d = toDateStr(e.date);
+    const prev = best.get(d);
+    if (!prev || e.date > prev.ts) best.set(d, { ts: e.date, qty: e.qty });
+  }
+  const out = new Map<string, number>();
+  for (const [d, v] of Array.from(best.entries())) out.set(d, v.qty);
+  return out;
+}
+
+function extractMetrics(body: HealthPayload): HealthMetric[] | null {
+  if (Array.isArray(body)) return body;
   if ("data" in body && body.data && Array.isArray((body as HealthPayloadWrapped).data.metrics)) {
     return (body as HealthPayloadWrapped).data.metrics;
   }
@@ -46,40 +80,40 @@ function extractMetrics(body: HealthPayload): HealthMetric[] | null {
   return null;
 }
 
-// Sum all qty values for a given date across all entries in a metric
-function sumByDate(metric: HealthMetric): Map<string, number> {
-  const totals = new Map<string, number>();
-  for (const entry of metric.data) {
-    const d = toDateStr(entry.date);
-    totals.set(d, (totals.get(d) ?? 0) + entry.qty);
-  }
-  return totals;
+// Helper: get aggregated map for a named metric, or empty map if not present
+function getSum(byName: Map<string, HealthMetric>, name: string): Map<string, number> {
+  const m = byName.get(name);
+  return m ? sumByDate(m.data) : new Map();
 }
-
-// Return the highest qty value for a given date (for sleep — take best/last reading)
-function maxByDate(metric: HealthMetric): Map<string, number> {
-  const bests = new Map<string, number>();
-  for (const entry of metric.data) {
-    const d = toDateStr(entry.date);
-    const current = bests.get(d) ?? 0;
-    if (entry.qty > current) bests.set(d, entry.qty);
-  }
-  return bests;
+function getLatest(byName: Map<string, HealthMetric>, name: string): Map<string, number> {
+  const m = byName.get(name);
+  return m ? latestByDate(m.data) : new Map();
+}
+// avgByDate exposed for walking metrics
+function getAvg(byName: Map<string, HealthMetric>, name: string): Map<string, number> {
+  const m = byName.get(name);
+  return m ? avgByDate(m.data) : new Map();
 }
 
 export async function GET() {
   return Response.json({
     status: "ok",
-    env_check: !!process.env.HEALTH_SYNC_SECRET,
     supported_metrics: [
-      "body_mass", "weight_body_mass", "HKQuantityTypeIdentifierBodyMass",
-      "body_fat_percentage", "body_fat_percent", "bodyFatPercentage",
-      "dietary_energy_consumed", "dietaryEnergyConsumed",
-      "dietary_protein", "dietaryProtein",
-      "dietary_carbohydrates", "dietaryCarbohydrates",
-      "dietary_fat_total", "dietaryFatTotal",
-      "step_count", "stepCount", "HKQuantityTypeIdentifierStepCount",
-      "sleep_analysis", "sleepAnalysis", "HKCategoryTypeIdentifierSleepAnalysis",
+      // Body
+      "weight_body_mass", "body_fat_percentage", "lean_body_mass", "body_mass_index", "height",
+      // Nutrition (energy in kJ — converted to kcal on ingest)
+      "dietary_energy", "protein", "carbohydrates", "total_fat", "fiber", "dietary_sugar",
+      "saturated_fat", "monounsaturated_fat", "polyunsaturated_fat", "cholesterol", "sodium",
+      "dietary_water",
+      // Minerals
+      "calcium", "iron", "magnesium", "phosphorus", "potassium", "zinc", "copper", "manganese", "selenium",
+      // Vitamins
+      "vitamin_a", "vitamin_c", "vitamin_d", "vitamin_e", "vitamin_k",
+      "vitamin_b6", "vitamin_b12", "niacin", "riboflavin", "thiamin", "folate", "pantothenic_acid",
+      // Activity
+      "step_count", "walking_running_distance", "flights_climbed",
+      // Sleep
+      "sleep_analysis",
     ],
     timestamp: new Date().toISOString(),
   });
@@ -96,33 +130,15 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  console.log("[health-sync] raw body:", JSON.stringify(rawBody));
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const metricNames = (rawBody as any)?.data?.metrics?.map((m: any) => m.name) ?? [];
-  console.log("[health-sync] metrics received:", metricNames);
-
-  // Log the top-level shape so we can see the actual structure
-  console.log("[health-sync] Payload top-level keys:", Object.keys(rawBody as object));
-  if ("data" in (rawBody as object)) {
-    const d = (rawBody as HealthPayloadWrapped).data;
-    console.log("[health-sync] body.data keys:", d ? Object.keys(d) : "null");
-  }
-
   const metrics = extractMetrics(rawBody);
   if (!metrics) {
-    console.log("[health-sync] Could not extract metrics array. Raw payload:", JSON.stringify(rawBody).slice(0, 500));
+    console.log("[health-sync] Could not extract metrics. Payload:", JSON.stringify(rawBody).slice(0, 500));
     return Response.json({ error: "Invalid payload: cannot find metrics array" }, { status: 400 });
   }
 
-  console.log("[health-sync] Metric count:", metrics.length);
-  console.log("[health-sync] Metric names:", metrics.map((m) => m.name));
+  console.log("[health-sync] metrics received:", metrics.map((m) => m.name));
   for (const m of metrics) {
     console.log(`[health-sync] metric="${m.name}" units="${m.units}" entries=${m.data?.length ?? 0}`);
-    if (m.data?.length > 0) {
-      console.log(`[health-sync]   first entry:`, JSON.stringify(m.data[0]));
-      console.log(`[health-sync]   last entry:`, JSON.stringify(m.data[m.data.length - 1]));
-    }
   }
 
   const supabase = createServiceClient();
@@ -137,191 +153,209 @@ export async function POST(req: NextRequest) {
   }
   const users = (usersRaw ?? []) as Pick<User, "id" | "calorie_target">[];
   if (!users.length) {
-    console.log("[health-sync] No user found in DB");
     return Response.json({ error: "No user found" }, { status: 500 });
   }
   const { id: userId, calorie_target } = users[0];
-  console.log("[health-sync] User found:", userId, "calorie_target:", calorie_target);
 
+  // Build metric lookup map
   const byName = new Map<string, HealthMetric>();
-  for (const m of metrics) {
-    byName.set(m.name, m);
-  }
+  for (const m of metrics) byName.set(m.name, m);
 
-  const imported = { steps: 0, weights: 0, body_fat: 0, nutrition: 0, sleep: 0 };
+  const results: Record<string, string> = {};
   const errors: string[] = [];
 
-  // --- WEIGHTS ---
-  const bodyMass =
-    byName.get("body_mass") ??
-    byName.get("weight_body_mass") ??
-    byName.get("HKQuantityTypeIdentifierBodyMass");
-  console.log("[health-sync] body_mass metric found:", !!bodyMass, "entries:", bodyMass?.data?.length ?? 0);
+  // ─── WEIGHT / BODY METRICS ──────────────────────────────────────────────────
+  // Point-in-time: take the latest reading per day
+  const weightByDate   = getLatest(byName, "weight_body_mass");
+  const bodyFatByDate  = getLatest(byName, "body_fat_percentage");
+  const leanMassByDate = getLatest(byName, "lean_body_mass");
+  const bmiByDate      = getLatest(byName, "body_mass_index");
 
-  if (bodyMass) {
-    for (const entry of bodyMass.data) {
-      const timestamp = new Date(entry.date).toISOString();
-      const fourHoursMs = 4 * 60 * 60 * 1000;
-      const afterTime = new Date(new Date(entry.date).getTime() - fourHoursMs).toISOString();
-      const beforeTime = new Date(new Date(entry.date).getTime() + fourHoursMs).toISOString();
+  const weightDates = Array.from(weightByDate.keys());
+  let weightCount = 0;
 
-      const { data: existingRaw } = await supabase
-        .from("weight_logs")
-        .select("id")
-        .eq("user_id", userId)
-        .gte("logged_at", afterTime)
-        .lte("logged_at", beforeTime)
-        .limit(1);
-      const existing = (existingRaw ?? []) as { id: string }[];
-      if (existing.length > 0) {
-        console.log("[health-sync] weight duplicate skipped for", entry.date);
-        continue;
-      }
+  for (const date of weightDates) {
+    const weight_kg     = weightByDate.get(date)!;
+    const body_fat_pct  = bodyFatByDate.get(date) ?? null;
+    const lean_from_hk  = leanMassByDate.get(date) ?? null;
+    const lean_mass_kg  = lean_from_hk ?? (body_fat_pct != null ? weight_kg * (1 - body_fat_pct / 100) : null);
+    const bmi           = bmiByDate.get(date) ?? null;
 
-      const { error } = await supabase
-        .from("weight_logs")
-        .insert({
+    const { error } = await supabase
+      .from("weight_logs")
+      .upsert(
+        {
           user_id: userId,
-          weight_kg: entry.qty,
-          logged_at: timestamp,
-        } as never);
-      if (error) {
-        console.log("[health-sync] weight insert error:", error.message, "entry:", JSON.stringify(entry));
-        errors.push(`weight:${error.message}`);
-      } else {
-        console.log("[health-sync] weight inserted:", entry.qty, "kg on", entry.date);
-        imported.weights++;
-      }
+          log_date: date,
+          weight_kg,
+          body_fat_pct,
+          lean_mass_kg,
+          bmi,
+          logged_at: new Date(date + "T12:00:00Z").toISOString(),
+        } as never,
+        { onConflict: "user_id,log_date" }
+      );
+
+    if (error) {
+      console.log("[health-sync] weight upsert error:", error.message, "date:", date);
+      errors.push(`weight:${error.message}`);
+    } else {
+      console.log("[health-sync] weight upserted:", weight_kg, "kg on", date, "| fat:", body_fat_pct, "% | lean:", lean_mass_kg);
+      weightCount++;
     }
   }
+  results.weight = `${weightCount} entries`;
 
-  // --- BODY FAT ---
-  const bodyFatMetric =
-    byName.get("body_fat_percentage") ??
-    byName.get("body_fat_percent") ??
-    byName.get("bodyFatPercentage");
-  console.log("[health-sync] body_fat metric found:", !!bodyFatMetric, "entries:", bodyFatMetric?.data?.length ?? 0);
+  // ─── NUTRITION ──────────────────────────────────────────────────────────────
+  // Core macros — sum all entries per day
+  const energyByDate = getSum(byName, "dietary_energy"); // kJ → convert to kcal
+  const proteinByDate = getSum(byName, "protein");
+  const carbsByDate   = getSum(byName, "carbohydrates");
+  const fatByDate     = getSum(byName, "total_fat");
 
-  if (bodyFatMetric) {
-    for (const entry of bodyFatMetric.data) {
-      const fatPct = entry.qty;
-      const entryTime = new Date(entry.date).getTime();
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      const afterTime = new Date(entryTime - oneDayMs).toISOString();
-      const beforeTime = new Date(entryTime + oneDayMs).toISOString();
+  // Extended macros
+  const fiberByDate    = getSum(byName, "fiber");
+  const sugarByDate    = getSum(byName, "dietary_sugar");
+  const satFatByDate   = getSum(byName, "saturated_fat");
+  const monoFatByDate  = getSum(byName, "monounsaturated_fat");
+  const polyFatByDate  = getSum(byName, "polyunsaturated_fat");
+  const cholByDate     = getSum(byName, "cholesterol");
+  const sodiumByDate   = getSum(byName, "sodium");
+  const waterByDate    = getSum(byName, "dietary_water");
 
-      // Find the weight_log closest in time to this body fat reading
-      const { data: weightRowsRaw } = await supabase
-        .from("weight_logs")
-        .select("id, weight_kg")
-        .eq("user_id", userId)
-        .gte("logged_at", afterTime)
-        .lte("logged_at", beforeTime)
-        .order("logged_at", { ascending: false })
-        .limit(1);
-      const weightRows = (weightRowsRaw ?? []) as { id: string; weight_kg: number }[];
+  // Minerals
+  const calciumByDate  = getSum(byName, "calcium");
+  const ironByDate     = getSum(byName, "iron");
+  const magByDate      = getSum(byName, "magnesium");
+  const phosphByDate   = getSum(byName, "phosphorus");
+  const potByDate      = getSum(byName, "potassium");
+  const zincByDate     = getSum(byName, "zinc");
+  const copperByDate   = getSum(byName, "copper");
+  const mangByDate     = getSum(byName, "manganese");
+  const seByDate       = getSum(byName, "selenium");
 
-      if (!weightRows.length) {
-        console.log("[health-sync] body fat: no weight_log found within 24h of", entry.date, "— skipping");
-        continue;
-      }
+  // Vitamins
+  const vitAByDate     = getSum(byName, "vitamin_a");
+  const vitCByDate     = getSum(byName, "vitamin_c");
+  const vitDByDate     = getSum(byName, "vitamin_d");
+  const vitEByDate     = getSum(byName, "vitamin_e");
+  const vitKByDate     = getSum(byName, "vitamin_k");
+  const vitB6ByDate    = getSum(byName, "vitamin_b6");
+  const vitB12ByDate   = getSum(byName, "vitamin_b12");
+  const niacinByDate   = getSum(byName, "niacin");
+  const ribofByDate    = getSum(byName, "riboflavin");
+  const thiaminByDate  = getSum(byName, "thiamin");
+  const folateByDate   = getSum(byName, "folate");
+  const pantoByDate    = getSum(byName, "pantothenic_acid");
 
-      const { id: weightLogId, weight_kg } = weightRows[0];
-      const lean_mass_kg = weight_kg * (1 - fatPct / 100);
+  // Activity
+  const stepsByDate    = getSum(byName, "step_count");
+  const distByDate     = getSum(byName, "walking_running_distance");
+  const flightsByDate  = getSum(byName, "flights_climbed");
 
-      const { error } = await supabase
-        .from("weight_logs")
-        .update({ body_fat_pct: fatPct, lean_mass_kg } as never)
-        .eq("id", weightLogId);
+  // Only process days that have energy data (calories is NOT NULL in schema)
+  const nutritionDates = Array.from(energyByDate.keys()).sort();
+  let nutritionCount = 0;
 
-      if (error) {
-        console.log("[health-sync] body fat update error:", error.message);
-        errors.push(`body_fat:${error.message}`);
-      } else {
-        console.log("[health-sync] body fat updated:", fatPct, "% → lean", lean_mass_kg.toFixed(2), "kg on", entry.date);
-        imported.body_fat++;
-      }
+  for (const date of nutritionDates) {
+    const kj            = energyByDate.get(date)!;
+    const calories_kcal = Math.round((kj / 4.184) * 10) / 10;
+    const calories      = Math.round(calories_kcal);
+    const adherence_pct = Math.round((calories / calorie_target) * 10000) / 100;
+    const protein_g     = proteinByDate.get(date) ?? null;
+    const carbs_g       = carbsByDate.get(date) ?? null;
+    const fat_g         = fatByDate.get(date) ?? null;
+    const steps         = stepsByDate.has(date) ? Math.round(stepsByDate.get(date)!) : null;
+    const flights       = flightsByDate.has(date) ? Math.round(flightsByDate.get(date)!) : null;
+
+    // Log first day so we can verify kJ→kcal conversion in Vercel logs
+    if (nutritionCount === 0) {
+      console.log(
+        `[health-sync] nutrition sample date=${date} kJ=${kj} kcal=${calories_kcal} protein=${protein_g}g carbs=${carbs_g}g fat=${fat_g}g`
+      );
+    }
+
+    const { error } = await supabase
+      .from("nutrition_logs")
+      .upsert(
+        {
+          user_id: userId,
+          log_date: date,
+          calories,
+          calories_kcal,
+          protein_g,
+          carbs_g,
+          fats_g: fat_g,         // keep legacy column populated
+          fat_g,
+          adherence_pct,
+          fiber_g:               fiberByDate.get(date)  ?? null,
+          sugar_g:               sugarByDate.get(date)  ?? null,
+          saturated_fat_g:       satFatByDate.get(date) ?? null,
+          monounsaturated_fat_g: monoFatByDate.get(date) ?? null,
+          polyunsaturated_fat_g: polyFatByDate.get(date) ?? null,
+          cholesterol_mg:        cholByDate.get(date)   ?? null,
+          sodium_mg:             sodiumByDate.get(date) ?? null,
+          water_ml:              waterByDate.get(date)  ?? null,
+          calcium_mg:            calciumByDate.get(date) ?? null,
+          iron_mg:               ironByDate.get(date)   ?? null,
+          magnesium_mg:          magByDate.get(date)    ?? null,
+          phosphorus_mg:         phosphByDate.get(date) ?? null,
+          potassium_mg:          potByDate.get(date)    ?? null,
+          zinc_mg:               zincByDate.get(date)   ?? null,
+          copper_mg:             copperByDate.get(date) ?? null,
+          manganese_mg:          mangByDate.get(date)   ?? null,
+          selenium_mcg:          seByDate.get(date)     ?? null,
+          vitamin_a_mcg:         vitAByDate.get(date)   ?? null,
+          vitamin_c_mg:          vitCByDate.get(date)   ?? null,
+          vitamin_d_mcg:         vitDByDate.get(date)   ?? null,
+          vitamin_e_mg:          vitEByDate.get(date)   ?? null,
+          vitamin_k_mcg:         vitKByDate.get(date)   ?? null,
+          vitamin_b6_mg:         vitB6ByDate.get(date)  ?? null,
+          vitamin_b12_mcg:       vitB12ByDate.get(date) ?? null,
+          niacin_mg:             niacinByDate.get(date) ?? null,
+          riboflavin_mg:         ribofByDate.get(date)  ?? null,
+          thiamin_mg:            thiaminByDate.get(date) ?? null,
+          folate_mcg:            folateByDate.get(date) ?? null,
+          pantothenic_acid_mg:   pantoByDate.get(date)  ?? null,
+          steps,
+          distance_km:           distByDate.get(date)   ?? null,
+          flights_climbed:       flights,
+        } as never,
+        { onConflict: "user_id,log_date" }
+      );
+
+    if (error) {
+      console.log("[health-sync] nutrition upsert error:", error.message, "date:", date);
+      errors.push(`nutrition:${error.message}`);
+    } else {
+      nutritionCount++;
     }
   }
+  results.nutrition = `${nutritionCount} days`;
+  console.log("[health-sync] nutrition upserted:", nutritionCount, "days");
 
-  // --- NUTRITION ---
-  const energyMetric =
-    byName.get("dietary_energy_consumed") ??
-    byName.get("dietaryEnergyConsumed") ??
-    byName.get("HKQuantityTypeIdentifierDietaryEnergyConsumed");
-  const proteinMetric =
-    byName.get("dietary_protein") ??
-    byName.get("dietaryProtein") ??
-    byName.get("HKQuantityTypeIdentifierDietaryProtein");
-  const carbsMetric =
-    byName.get("dietary_carbohydrates") ??
-    byName.get("dietaryCarbohydrates") ??
-    byName.get("HKQuantityTypeIdentifierDietaryCarbohydrates");
-  const fatMetric =
-    byName.get("dietary_fat_total") ??
-    byName.get("dietaryFatTotal") ??
-    byName.get("HKQuantityTypeIdentifierDietaryFatTotal");
-
-  console.log("[health-sync] energy metric found:", !!energyMetric, "entries:", energyMetric?.data?.length ?? 0);
-  console.log("[health-sync] protein metric found:", !!proteinMetric);
-  console.log("[health-sync] carbs metric found:", !!carbsMetric);
-  console.log("[health-sync] fat metric found:", !!fatMetric);
-
-  if (energyMetric) {
-    for (const entry of energyMetric.data) {
-      const logDate = toDateStr(entry.date);
-      const protein = proteinMetric?.data.find((d) => toDateStr(d.date) === logDate)?.qty ?? null;
-      const carbs = carbsMetric?.data.find((d) => toDateStr(d.date) === logDate)?.qty ?? null;
-      const fats = fatMetric?.data.find((d) => toDateStr(d.date) === logDate)?.qty ?? null;
-      const calories = Math.round(entry.qty);
-      const adherence_pct = Math.round((calories / calorie_target) * 10000) / 100;
-
-      const { error } = await supabase
-        .from("nutrition_logs")
-        .upsert(
-          {
-            user_id: userId,
-            log_date: logDate,
-            calories,
-            protein_g: protein,
-            carbs_g: carbs,
-            fats_g: fats,
-            adherence_pct,
-          } as never,
-          { onConflict: "user_id,log_date" }
-        );
-      if (error) {
-        console.log("[health-sync] nutrition upsert error:", error.message, "date:", logDate);
-        errors.push(`nutrition:${error.message}`);
-      } else {
-        console.log("[health-sync] nutrition upserted:", calories, "kcal on", logDate);
-        imported.nutrition++;
-      }
-    }
-  }
-
-  // --- STEPS (sum all hourly entries per day) + SLEEP (max value per day) ---
-  const stepsMetric =
-    byName.get("step_count") ??
-    byName.get("stepCount") ??
-    byName.get("HKQuantityTypeIdentifierStepCount");
+  // ─── HABITS (sleep + steps) ──────────────────────────────────────────────────
+  // Sleep: max value per day
   const sleepMetric =
     byName.get("sleep_analysis") ??
     byName.get("sleepAnalysis") ??
     byName.get("HKCategoryTypeIdentifierSleepAnalysis");
 
-  console.log("[health-sync] steps metric found:", !!stepsMetric, "entries:", stepsMetric?.data?.length ?? 0);
-  console.log("[health-sync] sleep metric found:", !!sleepMetric, "entries:", sleepMetric?.data?.length ?? 0);
+  const sleepByDate = new Map<string, number>();
+  if (sleepMetric) {
+    for (const e of sleepMetric.data) {
+      const d = toDateStr(e.date);
+      if (e.qty > (sleepByDate.get(d) ?? 0)) sleepByDate.set(d, e.qty);
+    }
+  }
 
-  // Pre-aggregate before looping: sum steps per day, max sleep per day
-  const stepsByDate: Map<string, number> = stepsMetric ? sumByDate(stepsMetric) : new Map();
-  const sleepByDate: Map<string, number> = sleepMetric ? maxByDate(sleepMetric) : new Map();
+  const habitDatesSet = new Set<string>([
+    ...Array.from(stepsByDate.keys()),
+    ...Array.from(sleepByDate.keys()),
+  ]);
+  let habitCount = 0;
 
-  const habitDatesSet = new Set<string>([...Array.from(stepsByDate.keys()), ...Array.from(sleepByDate.keys())]);
-  const habitDates = Array.from(habitDatesSet);
-  console.log("[health-sync] habit dates to process:", habitDates.length);
-
-  for (const habitDate of habitDates) {
+  for (const habitDate of Array.from(habitDatesSet)) {
     const { data: existingRaw } = await supabase
       .from("habits")
       .select("*")
@@ -333,22 +367,16 @@ export async function POST(req: NextRequest) {
     const stepsTotal = stepsByDate.get(habitDate);
     const sleepValue = sleepByDate.get(habitDate);
 
-    const gym = existing?.gym ?? false;
-    const diet_adherent = existing?.diet_adherent ?? false;
-    const sleep_hours = sleepValue != null ? sleepValue : (existing?.sleep_hours ?? null);
-    const meditation = existing?.meditation ?? false;
+    const gym             = existing?.gym ?? false;
+    const diet_adherent   = existing?.diet_adherent ?? false;
+    const sleep_hours     = sleepValue ?? existing?.sleep_hours ?? null;
+    const meditation      = existing?.meditation ?? false;
     const deep_work_hours = existing?.deep_work_hours ?? null;
-    const vitamin_intake = existing?.vitamin_intake ?? false;
-    const steps = stepsTotal != null ? Math.round(stepsTotal) : (existing?.steps ?? 0);
+    const vitamin_intake  = existing?.vitamin_intake ?? false;
+    const steps           = stepsTotal != null ? Math.round(stepsTotal) : (existing?.steps ?? 0);
 
     const completion_status = calcCompletionStatus(
-      gym,
-      diet_adherent,
-      sleep_hours,
-      meditation,
-      deep_work_hours,
-      vitamin_intake,
-      steps
+      gym, diet_adherent, sleep_hours, meditation, deep_work_hours, vitamin_intake, steps
     );
 
     const { error } = await supabase
@@ -357,14 +385,8 @@ export async function POST(req: NextRequest) {
         {
           user_id: userId,
           habit_date: habitDate,
-          gym,
-          diet_adherent,
-          sleep_hours,
-          meditation,
-          deep_work_hours,
-          vitamin_intake,
-          steps,
-          completion_status,
+          gym, diet_adherent, sleep_hours, meditation, deep_work_hours, vitamin_intake,
+          steps, completion_status,
         } as never,
         { onConflict: "user_id,habit_date" }
       );
@@ -373,17 +395,17 @@ export async function POST(req: NextRequest) {
       console.log("[health-sync] habits upsert error:", error.message, "date:", habitDate);
       errors.push(`habits:${error.message}`);
     } else {
-      if (stepsTotal != null) {
-        console.log("[health-sync] steps upserted:", steps, "on", habitDate);
-        imported.steps++;
-      }
-      if (sleepValue != null) {
-        console.log("[health-sync] sleep upserted:", sleep_hours, "hrs on", habitDate);
-        imported.sleep++;
-      }
+      habitCount++;
     }
   }
+  results.habits = `${habitCount} days`;
+  console.log("[health-sync] habits upserted:", habitCount, "days");
 
-  console.log("[health-sync] Done. imported:", JSON.stringify(imported), "errors:", errors.length);
-  return Response.json({ imported, errors: errors.length > 0 ? errors : undefined });
+  console.log("[health-sync] Done. results:", JSON.stringify(results), "errors:", errors.length);
+  return Response.json({
+    success: true,
+    metrics_received: metrics.length,
+    results,
+    errors: errors.length > 0 ? errors : undefined,
+  });
 }
