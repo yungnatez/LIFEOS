@@ -40,21 +40,6 @@ function sumByDate(entries: HealthEntry[]): Map<string, number> {
   return totals;
 }
 
-// Average qty values for the same date
-function avgByDate(entries: HealthEntry[]): Map<string, number> {
-  const sums = new Map<string, number>();
-  const counts = new Map<string, number>();
-  for (const e of entries) {
-    const d = toDateStr(e.date);
-    sums.set(d, (sums.get(d) ?? 0) + e.qty);
-    counts.set(d, (counts.get(d) ?? 0) + 1);
-  }
-  const result = new Map<string, number>();
-  for (const [d, sum] of Array.from(sums.entries())) {
-    result.set(d, sum / (counts.get(d) ?? 1));
-  }
-  return result;
-}
 
 // For point-in-time metrics: take the latest entry per date by timestamp string
 function latestByDate(entries: HealthEntry[]): Map<string, number> {
