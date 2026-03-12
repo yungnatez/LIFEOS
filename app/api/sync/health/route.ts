@@ -98,6 +98,10 @@ export async function POST(req: NextRequest) {
 
   console.log("[health-sync] raw body:", JSON.stringify(rawBody));
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const metricNames = (rawBody as any)?.data?.metrics?.map((m: any) => m.name) ?? [];
+  console.log("[health-sync] metrics received:", metricNames);
+
   // Log the top-level shape so we can see the actual structure
   console.log("[health-sync] Payload top-level keys:", Object.keys(rawBody as object));
   if ("data" in (rawBody as object)) {
