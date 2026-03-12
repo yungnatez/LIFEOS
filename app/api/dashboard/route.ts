@@ -69,7 +69,6 @@ export async function GET() {
       .select("*")
       .eq("user_id", user.id)
       .eq("active", true)
-      .eq("is_primary", true)
       .order("display_order", { ascending: true }),
     supabase
       .from("alerts")
@@ -105,10 +104,33 @@ export async function GET() {
     : null;
 
   // Primary lifts with best sets
-  const primaryLifts: LiftSummary[] = ((exercisesRes.data ?? []) as Exercise[]).map((ex) => {
-    const allSets = workouts.flatMap((w) =>
+  const allExercises = (exercisesRes.data ?? []) as Exercise[];
+  const primaryExercises = allExercises.filter((e) => e.is_primary);
+
+  const primaryLifts: LiftSummary[] = primaryExercises.map((ex) => {
+    let allSets = workouts.flatMap((w) =>
       w.sets.filter((s) => s.exercise_id === ex.id)
     );
+
+    // Fuzzy fallback: strip parentheticals, match on meaningful tokens
+    if (allSets.length === 0) {
+      const nameTokens = ex.name
+        .toLowerCase()
+        .replace(/\s*\(.*?\)/g, "")
+        .split(/\s+/)
+        .filter((t) => t.length > 3);
+      const fuzzyMatch = allExercises.find(
+        (other) =>
+          other.id !== ex.id &&
+          nameTokens.length > 0 &&
+          nameTokens.every((token) => other.name.toLowerCase().includes(token))
+      );
+      if (fuzzyMatch) {
+        allSets = workouts.flatMap((w) =>
+          w.sets.filter((s) => s.exercise_id === fuzzyMatch.id)
+        );
+      }
+    }
     const bestSet = allSets.reduce(
       (best, s) =>
         (s.estimated_1rm_kg ?? 0) > (best?.estimated_1rm_kg ?? 0) ? s : best,
